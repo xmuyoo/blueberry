@@ -17,6 +17,6 @@ COPY start.sh /
 
 ARG INIT_DB_DIR="/initdb"
 RUN mkdir -p ${INIT_DB_DIR}
-COPY init_timescaledb.sql init_metric_tables.sql ${INIT_DB_DIR}/
+COPY init_db.sql ${INIT_DB_DIR}/
 
 CMD chmod +x /start.sh && /bin/sh -c /start.sh

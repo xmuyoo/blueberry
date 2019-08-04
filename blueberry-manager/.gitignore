@@ -1,6 +1,5 @@
 *.class
 
-.iead/
 .project
 .classpath
 .settings/*

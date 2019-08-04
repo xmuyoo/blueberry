@@ -12,11 +12,11 @@ Use the commands below to deploy a local environment:
 
 ```shell
 # Enter the deployment directory.
-cd local-env;
+cd blueberry-env;
 
 # Run the scripts to build docker images
 chmod +x build.sh && ./build.sh
 
 # Deploy images
-docker-compose -f docker-compose.yml up
+docker-compose up
 ```

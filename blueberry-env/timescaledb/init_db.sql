@@ -1,21 +1,21 @@
 /*
- * This script is used to set up the TimescaleDB-based metric store for Galileo.
+ * This script is used to set up the TimescaleDB-based storage for Blueberry.
  *
  * Here are what it mainly does:
  * 1) Create two new schemas:
- *     - bluberry: for Galileo helper functions and hypertables
+ *     - bluberry: for Blueberry helper functions and hypertables
  *     - timescale: for functions provided by TimescaleDB extension
  * 2) Create TimescaleDB extension in timescale schema
  * 3) Create helper functions in bluberry schema
- * 4) Configure privileges for Galileo writer & reader accounts
- *     - Galileo writer: used by bluberry-metric and internal Grafana account
- *     - Galileo reader: used by public Grafana account
+ * 4) Configure privileges for Bluebery writer & reader accounts
+ *     - Blueberry writer: used by bluberry monitors and data analysis
+ *     - Blueberry reader: used by public Blueberry account
  *
  * NOTE:
  * Because the privilege check in TimescaleDB isn't complete, some writable
  * TimescaleDB functions, e.g. drop_chunks(), can still be executed by normal
- * PostgreSQL read-only account.  So we have to fine tune the privileges for
- * Galileo reader account to allow it use some read-only TimescaleDB functions.
+ * PostgreSQL read-only account. So we have to fine tune the privileges for
+ * Blueberry reader account to allow it use some read-only TimescaleDB functions.
  *
  * The script MUST be executed by the superuser 'postgres'.
  *
@@ -25,9 +25,9 @@
 
 /*
  * The followings MUST be done before running this script.
- * - Create Galileo writer account: writer
- * - Create Galileo reader account: reader
- * - Create Galileo metric database and connect to it
+ * - Create Blueberry writer account: writer
+ * - Create Blueberry reader account: reader
+ * - Create Blueberry metric database and connect to it
  *
  * The SQL statements below can be used in non-production env.
  */
@@ -86,11 +86,11 @@ DO $$
   DECLARE schema_name TEXT;
   DECLARE func TEXT;
 BEGIN
-  RAISE INFO 'Configure privileges for Galileo writer/reader accounts';
+  RAISE INFO 'Configure privileges for Blueberry writer/reader accounts';
 
   /* All newly created functions are executable to PUBLIC by default in PostgreSQL,
    * so they're executable to all accounts. Here we must revoke them explicitly
-   * from PUBLIC and grant proper privileges to Galileo writer/reader accounts.
+   * from PUBLIC and grant proper privileges to Blueberry writer/reader accounts.
    */
   FOREACH schema_name IN ARRAY TARGET_SCHEMAS
   LOOP
@@ -98,7 +98,7 @@ BEGIN
     EXECUTE 'REVOKE ALL ON ALL FUNCTIONS IN SCHEMA ' || schema_name || ' FROM PUBLIC';
   END LOOP;
 
-  /* Configure privileges for Galileo writer */
+  /* Configure privileges for Blueberry writer */
   FOREACH schema_name IN ARRAY TARGET_SCHEMAS
   LOOP
     EXECUTE 'GRANT ALL ON ALL TABLES IN SCHEMA ' || schema_name || ' TO ' || BLUEBERRY_WRITER;
@@ -111,7 +111,7 @@ BEGIN
 
   EXECUTE 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ' || BLUEBERRY_WRITER;
 
-  /* Configure privileges for Galileo reader */
+  /* Configure privileges for Blueberry reader */
   FOREACH schema_name IN ARRAY TARGET_SCHEMAS
   LOOP
     EXECUTE 'GRANT USAGE ON SCHEMA ' || schema_name || ' TO ' || BLUEBERRY_READER;
@@ -128,7 +128,7 @@ END;
 $$;
 
 /* *********************************************************
- * Check privileges of the Galileo accounts
+ * Check privileges of the Blueberry accounts
  * *********************************************************/
 DO $$
   DECLARE BLUEBERRY_SCHEMA TEXT = 'bluberry';
@@ -158,7 +158,7 @@ DO $$
   DECLARE granted_funcs TEXT[];
   DECLARE func TEXT;
 BEGIN
-  /* Check privileges of Galileo writer */
+  /* Check privileges of Blueberry writer */
   RAISE INFO 'Check schema privileges of %', BLUEBERRY_WRITER;
   PERFORM nspname, regexp_matches(nspacl::TEXT, '('|| BLUEBERRY_WRITER || '=UC/postgres)')
   FROM pg_namespace
@@ -170,7 +170,7 @@ BEGIN
   END IF;
   RAISE INFO 'OK';
 
-  /* Check privileges of Galileo reader */
+  /* Check privileges of Blueberry reader */
   RAISE INFO 'Check schema privileges of %', BLUEBERRY_READER;
   PERFORM nspname, regexp_matches(nspacl::TEXT, '('|| BLUEBERRY_READER || '=U/postgres)')
   FROM pg_namespace

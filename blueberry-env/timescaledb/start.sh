@@ -33,7 +33,7 @@ if [ $? -eq 0 ];then
     ${PSQL} -U postgres $DATABASE -c "CREATE USER ${WRITTER} WITH NOSUPERUSER NOINHERIT LOGIN PASSWORD '${PASSWORD}';";
     ${PSQL} -U postgres $DATABASE -c "CREATE USER ${READER} WITH NOSUPERUSER NOINHERIT LOGIN PASSWORD '${PASSWORD}';";
     ${PSQL} -U postgres $DATABASE -c "ALTER USER ${READER} SET default_transaction_read_only = on;";
-    ${PSQL} -U postgres $DATABASE < ${INIT_DB_DIR}/init_timescaledb.sql
+    ${PSQL} -U postgres $DATABASE < ${INIT_DB_DIR}/init_db.sql
 
     echo "Start and initial database Successfully!"
 fi
