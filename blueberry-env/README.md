@@ -1,8 +1,9 @@
 ## Blueberry Environment
 ## Introduction
 
-A local environment deployed by docker compose, which contains:
+A local environment deployed by docker compose or setting up on physical machine, which contains:
 - PostgreSQL 10.6, with plugin TimescaleDB@1.2.1
+- Pulsar 2.4.0
 
 ## Usage
 Firstly, make sure you have installed Docker and keep it running.
