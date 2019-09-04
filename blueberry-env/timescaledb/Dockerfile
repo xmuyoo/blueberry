@@ -4,6 +4,8 @@ RUN  /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 ARG PG_HOME="/data/postgresql"
 ENV PG_HOME=${PG_HOME}
+ENV POSTGRES_PASSWORD=123456
+
 RUN mkdir -p ${PG_HOME}
 RUN mkdir -p ${PG_HOME}/data
 RUN mkdir -p ${PG_HOME}/logs

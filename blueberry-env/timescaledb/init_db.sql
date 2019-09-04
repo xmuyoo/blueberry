@@ -3,12 +3,12 @@
  *
  * Here are what it mainly does:
  * 1) Create two new schemas:
- *     - bluberry: for Blueberry helper functions and hypertables
+ *     - blueberry: for Blueberry helper functions and hypertables
  *     - timescale: for functions provided by TimescaleDB extension
  * 2) Create TimescaleDB extension in timescale schema
- * 3) Create helper functions in bluberry schema
+ * 3) Create helper functions in blueberry schema
  * 4) Configure privileges for Bluebery writer & reader accounts
- *     - Blueberry writer: used by bluberry monitors and data analysis
+ *     - Blueberry writer: used by blueberry monitors and data analysis
  *     - Blueberry reader: used by public Blueberry account
  *
  * NOTE:
@@ -40,7 +40,7 @@
  * Initialize schemas and TimescaleDB extension
  */
 DO $$
-  DECLARE BLUEBERRY_SCHEMA TEXT = 'bluberry';
+  DECLARE BLUEBERRY_SCHEMA TEXT = 'blueberry';
   DECLARE TIMESCALE_SCHEMA TEXT = 'timescale';
   DECLARE DATABASE_NAME TEXT = current_database();
 BEGIN
@@ -58,7 +58,7 @@ $$;
  * Configure privileges
  * ************************************************************/
 DO $$
-  DECLARE BLUEBERRY_SCHEMA TEXT = 'bluberry';
+  DECLARE BLUEBERRY_SCHEMA TEXT = 'blueberry';
   DECLARE TIMESCALE_SCHEMA TEXT = 'timescale';
   DECLARE BLUEBERRY_WRITER TEXT = 'writer';
   DECLARE BLUEBERRY_READER TEXT = 'reader';
@@ -131,7 +131,7 @@ $$;
  * Check privileges of the Blueberry accounts
  * *********************************************************/
 DO $$
-  DECLARE BLUEBERRY_SCHEMA TEXT = 'bluberry';
+  DECLARE BLUEBERRY_SCHEMA TEXT = 'blueberry';
   DECLARE TIMESCALE_SCHEMA TEXT = 'timescale';
   DECLARE BLUEBERRY_WRITER TEXT = 'writer';
   DECLARE BLUEBERRY_READER TEXT = 'reader';

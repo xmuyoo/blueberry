@@ -1,32 +1,21 @@
 version: '3'
 networks:
   mynetwork:
-    driver: bridge
 
 services:
-  # timescaledb:
-  #   image: "timescaledb:1.2.1"
-  #   build: ./timescaledb/
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     - POSTGRES_PASSWORD=123456
-  #   networks:
-  #     mynetwork:
-  #       aliases:
-  #         - local.timescaledb.com
-  
-  pulsar:
-    image: "apachepulsar/pulsar:2.4.0"
+  timescaledb:
+    image: "timescaledb:1.2.1"
+    build: ./timescaledb/
     ports:
-      - "8080:8080"
-      - "6650:6650"
-    environment:
-      - PULSAR_MEM=" -Xms512m -Xmx512m -XX:MaxDirectMemorySize=1g"
-    command: >
-      /bin/bash -c
-      "bin/apply-config-from-env.py conf/standalone.conf && bin/pulsar standalone"
+      - "5432:5432"
     networks:
-      mynetwork:
-        aliases:
-          - lcoal.pulsar.com
+      - mynetwork
+  
+  #pulsar:
+  #  image: "pulsar:2.4.0"
+  #  build: ./pulsar/
+  #  ports:
+  #    - "8080:8080"
+  #    - "6650:6650"
+  #  networks:
+  #    - mynetwork
