@@ -1,30 +1,26 @@
-package org.xmuyoo;
+package org.xmuyoo.domains;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 
 @Entity
-@Setter
+@Table(name = "users")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Setter
+@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Schema {
-
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @JsonProperty("name")
+    @JsonProperty
     @Column
     private String name;
-
-    @JsonProperty("key")
-    @Column(unique = true)
-    private String key;
 }

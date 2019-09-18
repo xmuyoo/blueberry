@@ -1,4 +1,4 @@
-package org.xmuyoo;
+package org.xmuyoo.rest;
 
 import java.util.ArrayList;
 import java.util.List;
