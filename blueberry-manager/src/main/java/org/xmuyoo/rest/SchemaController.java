@@ -34,8 +34,8 @@ public class SchemaController {
             if (!DataSchema.validateValueType(reqDataSchema.type()))
                 throw new IllegalArgumentException("Unknown value type of " + reqDataSchema.type());
 
-            DataSchema dataSchema =
-                    schemaRepo.findByNamespaceAndName(reqDataSchema.namespace(), reqDataSchema.name());
+            DataSchema dataSchema = schemaRepo.findAllByNamespaceAndNameAndUserId(
+                    reqDataSchema.namespace(), reqDataSchema.name(), reqDataSchema.userId());
             if (null != dataSchema) {
                 savedDataSchemas.add(dataSchema);
                 continue;

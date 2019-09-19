@@ -32,6 +32,6 @@ public class CrawlRecord {
     private boolean success;
 
     @JsonProperty
-    @ManyToOne(cascade = CascadeType.ALL)
-    private CrawlTask crawlTask;
+    @Column
+    private Long crawlTaskId;
 }
