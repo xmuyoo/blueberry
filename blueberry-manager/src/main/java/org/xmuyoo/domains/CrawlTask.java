@@ -6,7 +6,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -19,7 +19,7 @@ import java.util.Map;
 public class CrawlTask {
 
     public enum SourceType {
-        PureUrl,
+        Api,
         Html
     }
 
@@ -36,6 +36,10 @@ public class CrawlTask {
     @Column(nullable = false)
     private String sourceName;
 
+    /**
+     * SourceUrl is a url pattern which may contain some data schemas.
+     * Each data schema in the pattern should be the id of a existing {@link DataSchema}.
+     */
     @JsonProperty
     @Column(columnDefinition = "text", nullable = false)
     private String sourceUrl;
@@ -48,24 +52,28 @@ public class CrawlTask {
     @Column(columnDefinition = "text", nullable = false)
     private String httpMethod;
 
+    /**
+     * BodyPattern is a body parameters pattern which may contain some data schemas.
+     * Each data schema in the pattern should be the id of a existing {@link DataSchema}.
+     */
     @JsonProperty
-    @ElementCollection
-    private Map<String, String> queryParameters;
+    @Column(columnDefinition = "text")
+    private String bodyPattern;
+
+    @JsonProperty
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Crawler crawler;
 
     @JsonProperty
     @ElementCollection
-    private Map<String, String> bodyParameters;
-
-    @JsonProperty
-    @Column
-    private String crawlerName;
+    private Set<DataSchema> dataSchemaSet;
 
     @JsonProperty
     @Column
     private String timeRanges;
 
     @JsonProperty
-    @Column
+    @Column(columnDefinition = "text not null")
     private String period;
 
     @JsonProperty
