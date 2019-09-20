@@ -3,7 +3,7 @@
 It should contain the following sub-system:
 - Blueberry Manager 
 - Blueberry Environment
-- Blueberry Crawling
+- Blueberry Collect
 - Data Application Processing System
 
 #### Blueberry Manager
@@ -14,10 +14,10 @@ Scripts to deploy a basic environment for Blueberry in Docker.
 
 See more details: [blueberry-env](blueberry-env/README.md)
 
-#### Blueberry Carwling
-A plug-in sub-system for crawling data for storage, processing and analysis.
+#### Blueberry Collect
+A plug-in sub-system for collecting data for storage, processing and analysis.
 
-See more details: [blueberry-crawling](blueberry-crawling/README.md)
+See more details: [blueberry-collect](blueberry-crawling/README.md)
 
 #### Data Application Processiong System
 A sub-system for processing data.
