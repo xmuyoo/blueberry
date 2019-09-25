@@ -2,10 +2,15 @@ package org.xmuyoo.blueberry.collect.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.Collection;
 
 public class Utils {
 
@@ -14,6 +19,7 @@ public class Utils {
     public static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     public static final ZoneId UTC = ZoneId.of("UTC");
     public static final ZoneOffset ZONE_OFFSET_0_HOURS = ZoneOffset.ofHours(0);
+    public static final HashFunction MURMUR3 = Hashing.murmur3_128();
 
     private static final Joiner COMMA_JOINER = Joiner.on(",");
     private static final DateTimeFormatter DATETIME_FORMATTER =
@@ -22,7 +28,7 @@ public class Utils {
             DateTimeFormatter.ofPattern("H:m");
     private static final long ONE_DAY_MILLIS = 86400 * 1000;
 
-    public static String commaJoin(List<String> items) {
+    public static String commaJoin(Collection<String> items) {
         return COMMA_JOINER.join(items);
     }
 

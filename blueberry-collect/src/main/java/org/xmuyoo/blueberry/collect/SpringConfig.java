@@ -6,38 +6,46 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
-import org.xmuyoo.blueberry.collect.storage.TimescaleDBClient;
+import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Configuration
 @PropertySource("classpath:application.properties")
 public class SpringConfig {
 
     @Bean(initMethod = "start", destroyMethod = "shutdown")
-    public TimescaleDBClient timescaleDBClient() {
-        Config config = Configs.databaseConfig();
-
-        DruidDataSource druidDataSource = new DruidDataSource();
-        druidDataSource.setDriverClassName(config.getString("driver.class"));
-        druidDataSource.setUrl(config.getString("url"));
-        druidDataSource.setUsername(config.getString("user"));
-        druidDataSource.setPassword(config.getString("password"));
-        druidDataSource.setInitialSize(2);
-        druidDataSource.setMinIdle(2);
-        druidDataSource.setMaxActive(20);
-        druidDataSource.setMaxWait(10000);
-
-        return new TimescaleDBClient(druidDataSource);
-    }
-
-    @Bean(initMethod = "start", destroyMethod = "shutdown")
-    public CollectorManager collectorManager(HttpClient httpClient,
-                                           TimescaleDBClient timescaleDBClient) {
-
-        return new CollectorManager(httpClient, timescaleDBClient);
-    }
-
-    @Bean(initMethod = "start", destroyMethod = "shutdown")
     public HttpClient httpClient() {
         return new HttpClient();
+    }
+
+    @Bean(initMethod = "start", destroyMethod = "shutdown")
+    public CollectorMaster collectorManager(HttpClient httpClient) {
+        Config metaBaseConfig = Configs.metaBaseConfig();
+        DruidDataSource metaDataSource = new DruidDataSource();
+        metaDataSource.setDriverClassName(metaBaseConfig.getString("driver.class"));
+        metaDataSource.setUrl(metaBaseConfig.getString("url"));
+        metaDataSource.setUsername(metaBaseConfig.getString("user"));
+        metaDataSource.setPassword(metaBaseConfig.getString("password"));
+        metaDataSource.setInitialSize(2);
+        metaDataSource.setMinIdle(2);
+        metaDataSource.setMaxActive(20);
+        metaDataSource.setMaxWait(10000);
+
+        PgClient metaBase = new PgClient(metaDataSource);
+
+        int cores = Runtime.getRuntime().availableProcessors();
+        Config dataWarehouseConfig = Configs.dataWarehouseConfig();
+        DruidDataSource warehouseDataSource = new DruidDataSource();
+        warehouseDataSource.setDriverClassName(dataWarehouseConfig.getString("driver.class"));
+        warehouseDataSource.setUrl(dataWarehouseConfig.getString("url"));
+        warehouseDataSource.setUsername(dataWarehouseConfig.getString("user"));
+        warehouseDataSource.setPassword(dataWarehouseConfig.getString("password"));
+        warehouseDataSource.setInitialSize(cores);
+        warehouseDataSource.setMinIdle(2);
+        warehouseDataSource.setMaxActive(cores * 4);
+        warehouseDataSource.setMaxWait(10000);
+
+        PgClient dataWarehouse = new PgClient(warehouseDataSource);
+
+        return new CollectorMaster(httpClient, metaBase, dataWarehouse);
     }
 }

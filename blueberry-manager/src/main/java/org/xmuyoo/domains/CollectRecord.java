@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @ToString
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CollectingRecord {
+public class CollectRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

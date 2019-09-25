@@ -4,5 +4,6 @@ public enum ValueType {
     Text,
     Number,
     Datetime,
-    Json
+    Json,
+    Boolean
 }

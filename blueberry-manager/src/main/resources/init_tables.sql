@@ -4,7 +4,7 @@ insert into "users"(id, name) values
 on conflict(id) do nothing;
 
 -- Initialize collectors
-insert into "collectors"(id, name, driver, alias, description) values
+insert into "collector"(id, name, driver, alias, description) values
     (1, 'StockRealtimePrice', 'org.xmuyoo.blueberry.collect.collectors.StockRealtimePriceCollector',
         '实时股价采集器', '股票实时交易数据爬虫，只在开市时间段内爬取每只股票的实时数据'),
     (2, 'StockCode', 'org.xmuyoo.blueberry.collect.collectors.StockCodeCollector',
@@ -20,7 +20,7 @@ values
 on conflict(namespace, name, user_id) do nothing;
 
 -- Initialize system collector tasks
-insert into "collect_task"(id, active, body_pattern, collect_id, created, description,
+insert into "collect_task"(id, active, body_pattern, collector_id, created, description,
                         http_method, period, source_name, source_type, source_url, time_ranges, user_id)
 values
     (1, true, null, 1, now(), '交易日采集实时股价任务', 'get', '1 minute',
