@@ -13,7 +13,7 @@ import org.xmuyoo.blueberry.collect.storage.ValueType;
 @Persistent(name = "stock_code")
 public class StockCode {
 
-    public enum Type {
+    public enum Exchange {
         SH, SZ;
 
         @Override
@@ -28,14 +28,14 @@ public class StockCode {
     @PersistentProperty(name = "name", valueType = ValueType.Text)
     private String name;
 
-    @PersistentProperty(name = "type", valueType = ValueType.Text)
-    private Type type;
+    @PersistentProperty(name = "exchange", valueType = ValueType.Text)
+    private Exchange exchange;
 
-    public static Type getType(String typeName) {
-        if (Type.SH.toString().equals(typeName.toLowerCase()))
-            return Type.SH;
-        else if (Type.SZ.toString().equals(typeName.toLowerCase()))
-            return Type.SZ;
+    public static Exchange getExchange(String typeName) {
+        if (Exchange.SH.toString().equals(typeName.toLowerCase()))
+            return Exchange.SH;
+        else if (Exchange.SZ.toString().equals(typeName.toLowerCase()))
+            return Exchange.SZ;
         else
             return null;
     }

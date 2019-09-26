@@ -6,10 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Persistent {
-
-    String name() default "";
-
-    UniqueConstraint[] uniqueConstraints() default {};
+@Target({ElementType.TYPE, ElementType.FIELD})
+public @interface UniqueConstraint {
+    String[] value() default {};
 }

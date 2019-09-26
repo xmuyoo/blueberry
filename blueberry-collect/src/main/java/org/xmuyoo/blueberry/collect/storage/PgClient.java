@@ -10,20 +10,18 @@ import org.xmuyoo.blueberry.collect.Lifecycle;
 import org.xmuyoo.blueberry.collect.domains.SeriesData;
 import org.xmuyoo.blueberry.collect.utils.Utils;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class TimescaleDBClient implements Lifecycle {
+public class PgClient implements Lifecycle {
 
-    private static final String INSERT_IGNORE_DATA_LIST_FMT =
+    private static final String INSERT_IGNORE_DATA_FORMAT =
+            "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT DO NOTHING";
+    private static final String INSERT_SPECIFIED_UNIQUE_DATA_FORMAT =
             "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO NOTHING";
     private static final String INSERT_SERIES_DATA_VALUES_SQL_FMT =
             "INSERT INTO values_%s (record_time, value, tag_id) VALUES(?, ?, ?)"
@@ -34,7 +32,7 @@ public class TimescaleDBClient implements Lifecycle {
 
     private final DruidDataSource dataSource;
 
-    public TimescaleDBClient(DruidDataSource dataSource) {
+    public PgClient(DruidDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -66,7 +64,7 @@ public class TimescaleDBClient implements Lifecycle {
         Field[] fields = clz.getDeclaredFields();
         List<PersistentProperty> propertyList = new ArrayList<>();
         List<String> propertyNames = new ArrayList<>();
-        List<String> uniqueProperties = new ArrayList<>();
+        Set<String> uniqueProperties = new HashSet<>();
         List<String> filedNames = new ArrayList<>();
         for (Field field : fields) {
             PersistentProperty property = field.getAnnotation(PersistentProperty.class);
@@ -84,17 +82,19 @@ public class TimescaleDBClient implements Lifecycle {
                      clz.getSimpleName());
             return false;
         }
-        if (uniqueProperties.isEmpty()) {
-            log.warn("There is no unique properties in {} and ignore the saves",
-                     clz.getSimpleName());
-            return false;
-        }
 
         String placeholders =
                 Utils.commaJoin(propertyNames.stream().map(p -> "?").collect(Collectors.toList()));
-        String insertSql = String.format(INSERT_IGNORE_DATA_LIST_FMT,
-                                         tableName, Utils.commaJoin(propertyNames), placeholders,
-                                         Utils.commaJoin(uniqueProperties));
+        String insertSql;
+        if (uniqueProperties.isEmpty()) {
+            insertSql = String.format(INSERT_IGNORE_DATA_FORMAT,
+                                      tableName, Utils.commaJoin(propertyNames), placeholders);
+        } else {
+            insertSql = String.format(INSERT_SPECIFIED_UNIQUE_DATA_FORMAT,
+                                      tableName, Utils.commaJoin(propertyNames), placeholders,
+                                      Utils.commaJoin(uniqueProperties));
+        }
+
         return saveData(dataList, filedNames, propertyList, insertSql);
     }
 
@@ -177,8 +177,6 @@ public class TimescaleDBClient implements Lifecycle {
                     Field field = data.getClass().getDeclaredField(fieldNames.get(i));
                     field.setAccessible(true);
                     PersistentProperty property = properties.get(i);
-                    if (fieldNames.get(i).equals("code") && field.get(data).toString().equals("201000"))
-                        log.info("");
 
                     switch (property.valueType()) {
                         case Json:
@@ -216,8 +214,8 @@ public class TimescaleDBClient implements Lifecycle {
         return execute(sql, clazz, exceptionHandler, true);
     }
 
-    private <R> List<R> execute(String sql, Class<R> clazz,
-                                Function<Exception, Void> exceptionHandler, boolean isQuery)
+    private <R, E> List<R> execute(String sql, Class<R> clazz,
+                                   Function<Exception, Void> exceptionHandler, boolean isQuery)
             throws SQLException {
 
         List<R> results = new ArrayList<>();
@@ -238,16 +236,40 @@ public class TimescaleDBClient implements Lifecycle {
                     // noinspection unchecked
                     results.add((R) resultSet.getObject(1));
                 } else {
+                    Map<String, Object> columnValues = new HashMap<>();
                     try {
-                        Class<?>[] clazzArray = new Class<?>[metaData.getColumnCount()];
-                        Object[] args = new Object[metaData.getColumnCount()];
-                        for (int i = 0; i < metaData.getColumnCount(); i++) {
-                            // The class index starts with 1
-                            clazzArray[i] = Class.forName(metaData.getColumnClassName(i + 1));
-                            args[i] = resultSet.getObject(i + 1);
+                        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                            String columnName = metaData.getColumnName(i);
+                            Object value = resultSet.getObject(i);
+                            columnValues.put(columnName, value);
                         }
-                        Constructor<R> constructor = clazz.getConstructor(clazzArray);
-                        results.add(constructor.newInstance(args));
+
+                        R instance = clazz.newInstance();
+                        for (Field field : clazz.getDeclaredFields()) {
+                            PersistentProperty property =
+                                    field.getAnnotation(PersistentProperty.class);
+                            if (null == property)
+                                continue;
+                            String name = property.name();
+                            if (!columnValues.containsKey(name))
+                                continue;
+
+                            field.setAccessible(true);
+                            Object value = columnValues.get(name);
+                            if (field.getType().isEnum()) {
+                                // noinspection unchecked
+                                for (Field enumField : field.getType().getDeclaredFields()) {
+                                    if (enumField.getName().equalsIgnoreCase((String) value)) {
+                                        Object ennumObj = enumField.get(instance);
+                                        field.set(instance, ennumObj);
+                                    }
+                                }
+                            } else {
+                                field.set(instance, value);
+                            }
+                        }
+
+                        results.add(instance);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

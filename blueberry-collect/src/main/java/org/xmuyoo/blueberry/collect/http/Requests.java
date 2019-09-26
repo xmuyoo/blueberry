@@ -8,12 +8,12 @@ public class Requests {
 
     private static final String STOCK_PRICE_HOST = "hq.sinajs.cn";
 
-    public static Request newStockCodeRequest(String code, StockCode.Type type) {
+    public static Request newStockCodeRequest(String code, StockCode.Exchange exchange) {
         Request request = new Request();
         request.protocol(Request.HttpProtocol.V1_1);
         request.host(STOCK_PRICE_HOST);
         request.method(HttpMethod.GET);
-        request.parameters(ImmutableMap.of("list", type.toString() + code));
+        request.parameters(ImmutableMap.of("list", exchange.toString() + code));
 
         return request;
     }
