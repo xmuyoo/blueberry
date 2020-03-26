@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.xmuyoo.domains.DataSchema;
-import org.xmuyoo.repos.SchemaRepo;
+import org.xmuyoo.storage.repos.DataSchemaRepo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RequestMapping("data-schema")
@@ -18,15 +19,14 @@ import java.util.List;
 public class SchemaController {
 
     @Autowired
-    private SchemaRepo schemaRepo;
+    private DataSchemaRepo schemaRepo;
 
     @RequestMapping(value = "add", method = RequestMethod.POST)
     public List<DataSchema> addSchema(@RequestBody List<DataSchema> reqDataSchemas) {
-        List<DataSchema> dataSchemaList = new ArrayList<>();
         List<DataSchema> savedDataSchemas = new ArrayList<>();
         for (DataSchema reqDataSchema : reqDataSchemas) {
             if (!ParameterValidator.notBlank(reqDataSchema.name(), reqDataSchema.namespace(),
-                                             reqDataSchema.userId(), reqDataSchema.type())) {
+                    reqDataSchema.type())) {
                 throw new IllegalArgumentException(
                         "DataSchema namespace, name, user_id and type are required");
             }
@@ -34,33 +34,30 @@ public class SchemaController {
             if (!DataSchema.validateValueType(reqDataSchema.type()))
                 throw new IllegalArgumentException("Unknown value type of " + reqDataSchema.type());
 
-            DataSchema dataSchema = schemaRepo.findAllByNamespaceAndNameAndUserId(
-                    reqDataSchema.namespace(), reqDataSchema.name(), reqDataSchema.userId());
+            DataSchema dataSchema = schemaRepo.queryByNamespaceAndName(
+                    reqDataSchema.namespace(), reqDataSchema.name());
             if (null != dataSchema) {
                 savedDataSchemas.add(dataSchema);
                 continue;
             }
 
             DataSchema newDataSchema = DataSchema.builder()
-                    .namespace(reqDataSchema.namespace())
-                    .name(reqDataSchema.name())
-                    .userId(reqDataSchema.userId())
-                    .type(reqDataSchema.type())
-                    .description(reqDataSchema.description())
-                    .build();
+                                                 .id(UUID.randomUUID().toString())
+                                                 .namespace(reqDataSchema.namespace())
+                                                 .name(reqDataSchema.name())
+                                                 .type(reqDataSchema.type())
+                                                 .description(reqDataSchema.description())
+                                                 .build();
 
-            dataSchemaList.add(newDataSchema);
+            schemaRepo.insert(newDataSchema);
+            savedDataSchemas.add(newDataSchema);
         }
 
-        savedDataSchemas.addAll((List<DataSchema>) schemaRepo.saveAll(dataSchemaList));
         return savedDataSchemas;
     }
 
-    @RequestMapping(value = "list", method = RequestMethod.GET)
-    public List<DataSchema> listSchema() {
-        List<DataSchema> dataSchemaList = new ArrayList<>();
-        schemaRepo.findAll().forEach(dataSchemaList::add);
-
-        return dataSchemaList;
+    @RequestMapping(value = "all", method = RequestMethod.GET)
+    public List<DataSchema> queryAllSchemas() {
+        return schemaRepo.queryAll();
     }
 }

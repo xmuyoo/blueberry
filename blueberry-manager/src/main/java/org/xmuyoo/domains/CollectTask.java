@@ -4,11 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-import java.util.Set;
+import java.sql.Timestamp;
 
-@Entity
 @Getter
 @Setter
 @ToString
@@ -16,24 +13,20 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(
+        of = {"id", "sourceName", "sourceUrl", "sourceType", "httpMethod", "bodyPattern",
+                "collectorId", "timeRanges", "period"})
 public class CollectTask {
 
     public enum SourceType {
-        Api,
-        Html
+        API,
+        HTML
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @JsonProperty
-    private Long id;
+    private String id;
 
     @JsonProperty
-    @Column
-    private Long userId;
-
-    @JsonProperty
-    @Column(nullable = false)
     private String sourceName;
 
     /**
@@ -41,15 +34,12 @@ public class CollectTask {
      * Each data schema in the pattern should be the id of a existing {@link DataSchema}.
      */
     @JsonProperty
-    @Column(columnDefinition = "text", nullable = false)
     private String sourceUrl;
 
     @JsonProperty
-    @Column(columnDefinition = "text", nullable = false)
     private SourceType sourceType;
 
     @JsonProperty
-    @Column(columnDefinition = "text", nullable = false)
     private String httpMethod;
 
     /**
@@ -57,32 +47,27 @@ public class CollectTask {
      * Each data schema in the pattern should be the id of a existing {@link DataSchema}.
      */
     @JsonProperty
-    @Column(columnDefinition = "text")
     private String bodyPattern;
 
     @JsonProperty
-    @ManyToOne(cascade = CascadeType.ALL)
-    private Collector collector;
+    private String collectorId;
 
     @JsonProperty
-    @ElementCollection
-    private Set<DataSchema> dataSchemaSet;
-
-    @JsonProperty
-    @Column
     private String timeRanges;
 
     @JsonProperty
-    @Column(columnDefinition = "text not null")
     private String period;
 
     @JsonProperty
-    @Column
     private boolean active;
 
-    @Column(columnDefinition = "timestamp with time zone", nullable = false)
-    private LocalDateTime created;
+    @JsonProperty
+    private Timestamp created;
 
-    @Column(columnDefinition = "text")
+    @JsonProperty
     private String description;
+
+    public void setSourceType(String sourceType) {
+        this.sourceType = SourceType.valueOf(sourceType.toUpperCase());
+    }
 }

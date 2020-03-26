@@ -7,10 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
 @ToString
@@ -18,20 +16,15 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CollectRecord {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @JsonProperty
     private Long id;
 
     @JsonProperty
-    @Column(columnDefinition = "timestamp with time zone", nullable = false)
     private LocalDateTime collectedDatetime;
 
     @JsonProperty
-    @Column
     private boolean success;
 
     @JsonProperty
-    @Column
     private Long collectTaskId;
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import javax.persistence.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,8 +13,6 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Entity
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"namespace", "name", "userId"})})
 public class DataSchema {
 
     public static final String VALUE_TYPE_NUMBER = "number";
@@ -25,28 +22,18 @@ public class DataSchema {
     private static final Pattern SCHEMA_PATTERN = Pattern.compile("([\\w]+)\\.([\\w]+)");
 
     @JsonProperty
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
 
     @JsonProperty
-    @Column
     private String namespace;
 
     @JsonProperty
-    @Column
     private String name;
 
     @JsonProperty
-    @Column
-    private Long userId;
-
-    @JsonProperty
-    @Column
     private String type;
 
     @JsonProperty
-    @Column(columnDefinition = "text")
     private String description;
 
 
