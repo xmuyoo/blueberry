@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.xmuyoo.Utils;
 import org.xmuyoo.domains.DataSchema;
 import org.xmuyoo.storage.repos.DataSchemaRepo;
 
@@ -41,13 +42,18 @@ public class SchemaController {
                 continue;
             }
 
-            DataSchema newDataSchema = DataSchema.builder()
-                                                 .id(UUID.randomUUID().toString())
-                                                 .namespace(reqDataSchema.namespace())
-                                                 .name(reqDataSchema.name())
-                                                 .type(reqDataSchema.type())
-                                                 .description(reqDataSchema.description())
-                                                 .build();
+            String namespace = reqDataSchema.namespace();
+            String name = reqDataSchema.name();
+            String id = Utils.MURMUR3.hashBytes(
+                    String.format("%s:%s", namespace, name).getBytes()).toString();
+            DataSchema newDataSchema = DataSchema
+                    .builder()
+                    .id(id)
+                    .namespace(reqDataSchema.namespace())
+                    .name(reqDataSchema.name())
+                    .type(reqDataSchema.type())
+                    .description(reqDataSchema.description())
+                    .build();
 
             schemaRepo.insert(newDataSchema);
             savedDataSchemas.add(newDataSchema);

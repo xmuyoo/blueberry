@@ -88,7 +88,7 @@ public class CollectTaskController {
                                              .created(new Timestamp(System.currentTimeMillis()))
                                              .description(reqCollectTask.description())
                                              .build();
-        collectTask.id(UUID.randomUUID().toString());
+        collectTask.id(Utils.randomId());
 
         collectTaskRepo.insert(collectTask);
 
