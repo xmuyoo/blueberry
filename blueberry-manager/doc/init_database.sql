@@ -42,6 +42,13 @@ create table if not exists collect_record (
     status varchar(16) default ''
 );
 
+create table if not exists collect_task_data_schema (
+    collect_task_id varchar(128) not null,
+    data_schema_id varchar(128) not null
+);
+create unique index tid_ds_id_idx on collect_task_data_schema(collect_task_id, data_schema_id);
+
+-- StockCode collector
 create table if not exists stock_code (
     code text not null primary key,
     name text not null default '',
