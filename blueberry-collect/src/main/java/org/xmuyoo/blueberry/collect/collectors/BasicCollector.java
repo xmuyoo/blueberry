@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class BasicCollector implements Collector {
 
     private static final String TASK_DATA_SCHEMA_MAPPING_SQL_FORMAT =
-            "INSERT INTO collect_task_data_schema_set(collect_task_id, data_schema_set_id) " +
-                    "VALUES(%s, %s) " +
-                    "ON CONFLICT(collect_task_id, data_schema_set_id) DO NOTHING";
+            "INSERT INTO collect_task_data_schema(collect_task_id, data_schema_id) " +
+                    "VALUES('%s', '%s') " +
+                    "ON CONFLICT(collect_task_id, data_schema_id) DO NOTHING";
 
     protected volatile boolean isRunning = true;
     protected volatile String name;
@@ -42,10 +42,7 @@ public abstract class BasicCollector implements Collector {
     private TaskDefinition taskDefinition;
 
     @Getter(AccessLevel.PROTECTED)
-    private Long taskId;
-
-    @Getter(AccessLevel.PROTECTED)
-    private Long userId;
+    private String taskId;
 
     private Long periodTime;
     private TimeUnit periodTimeUnit;
@@ -94,16 +91,16 @@ public abstract class BasicCollector implements Collector {
                 CollectRecord collectRecord = new CollectRecord();
                 collectRecord.id(Utils.MURMUR3.hashBytes(
                         String.format("%s:%s", taskDefinition.id(), now.toString()).getBytes())
-                                         .asLong());
+                                              .toString());
                 collectRecord.success(success);
                 collectRecord.collectTaskId(taskDefinition.id());
                 collectRecord.collectedDatetime(now);
 
                 metaBase.saveIgnoreDuplicated(Collections.singletonList(collectRecord),
-                                              CollectRecord.class);
+                        CollectRecord.class);
             } catch (Throwable t) {
                 log.error(String.format("Error in collector: [%s:%s]", name(),
-                                        taskDefinition.collectorName()), t);
+                        taskDefinition.collectorName()), t);
             }
 
             wait(periodTime, periodTimeUnit);
@@ -135,7 +132,6 @@ public abstract class BasicCollector implements Collector {
         this.periodTimeUnit = timePair.getValue();
 
         this.taskId = this.taskDefinition.id();
-        this.userId = taskDefinition.userId();
     }
 
     private void registerDataSchema() {
@@ -144,12 +140,12 @@ public abstract class BasicCollector implements Collector {
             metaBase.saveIgnoreDuplicated(dataSchemaList, DataSchema.class);
             for (DataSchema dataSchema : dataSchemaList) {
                 String sql = String.format(TASK_DATA_SCHEMA_MAPPING_SQL_FORMAT, taskDefinition.id(),
-                                           dataSchema.id());
+                        dataSchema.id());
                 metaBase.execute(sql);
             }
         } catch (Exception e) {
             log.error(String.format("Failed to register data schema for collector [%s:%s]",
-                                    name(), taskDefinition.collectorName()), e);
+                    name(), taskDefinition.collectorName()), e);
         }
     }
 }

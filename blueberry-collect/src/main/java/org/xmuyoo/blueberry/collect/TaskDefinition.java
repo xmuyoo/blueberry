@@ -27,8 +27,8 @@ public class TaskDefinition {
     public static final String TIME_UNIT_HOUR = "hour";
     public static final String TIME_UNIT_MINUTE = "minute";
 
-    @PersistentProperty(name = "id", valueType = ValueType.Number)
-    private Long id;
+    @PersistentProperty(name = "id", valueType = ValueType.Text)
+    private String id;
 
     @PersistentProperty(name = "description", valueType = ValueType.Text)
     private String description;
@@ -47,9 +47,6 @@ public class TaskDefinition {
 
     @PersistentProperty(name = "period", valueType = ValueType.Text)
     private String period;
-
-    @PersistentProperty(name = "user_id", valueType = ValueType.Number)
-    private Long userId;
 
     @PersistentProperty(name = "body_pattern", valueType = ValueType.Text)
     private String bodyPattern;

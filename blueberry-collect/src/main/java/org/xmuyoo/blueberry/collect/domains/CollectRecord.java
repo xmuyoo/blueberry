@@ -17,8 +17,8 @@ import java.time.LocalDateTime;
 @Persistent(name = "collect_record")
 public class CollectRecord {
 
-    @PersistentProperty(name = "id", valueType = ValueType.Number, isUnique = true)
-    private Long id;
+    @PersistentProperty(name = "id", valueType = ValueType.Text, isUnique = true)
+    private String id;
 
     @PersistentProperty(name = "collected_datetime", valueType = ValueType.Datetime)
     private LocalDateTime collectedDatetime;
@@ -26,6 +26,6 @@ public class CollectRecord {
     @PersistentProperty(name = "success", valueType = ValueType.Boolean)
     private boolean success;
 
-    @PersistentProperty(name = "collect_task_id", valueType = ValueType.Number)
-    private Long collectTaskId;
+    @PersistentProperty(name = "collect_task_id", valueType = ValueType.Text)
+    private String collectTaskId;
 }

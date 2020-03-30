@@ -82,14 +82,14 @@ public class StockCodeCollector extends BasicCollector {
     @Override
     protected List<DataSchema> getDataSchemaList() {
         DataSchema stockCode =
-                new DataSchema("stock_code", "code", userId(), ValueType.Text,
-                               "中国上交所和深交所股票代码");
+                new DataSchema("stock_code", "code", ValueType.Text,
+                               "中国上交所和深交所股票代码", this.taskId());
         DataSchema stockName =
-                new DataSchema("stock_code", "name", userId(), ValueType.Text,
-                               "中国上交所和深交所股票名称");
+                new DataSchema("stock_code", "name", ValueType.Text,
+                               "中国上交所和深交所股票名称", this.taskId());
         DataSchema stockExchange =
-                new DataSchema("stock_code", "exchange", userId(), ValueType.Text,
-                               "中国股票所属交易所");
+                new DataSchema("stock_code", "exchange", ValueType.Text,
+                               "中国股票所属交易所", this.taskId());
         return Arrays.asList(stockCode, stockName, stockExchange);
     }
 }

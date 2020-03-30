@@ -24,7 +24,7 @@ public class CollectorMaster implements Lifecycle {
 
     private static final String LOAD_COLLECTOR_SQL =
             "SELECT id, description, source_name, source_url, source_type, " +
-                    "time_ranges, period, user_id, body_pattern, active, http_method, " +
+                    "time_ranges, period, body_pattern, active, http_method, " +
                     "collector_name, collector_alias, collector_driver FROM task_definition";
 
     private ExecutorService collectorExecutors;

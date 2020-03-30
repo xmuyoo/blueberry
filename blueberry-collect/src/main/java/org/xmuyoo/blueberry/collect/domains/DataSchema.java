@@ -9,11 +9,11 @@ import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Getter
 @Persistent(name = "data_schema", uniqueConstraints = {@UniqueConstraint({"id"}),
-        @UniqueConstraint({"namespace", "name", "user_id"})})
+        @UniqueConstraint({"namespace", "name"})})
 public class DataSchema {
 
-    @PersistentProperty(name = "id", valueType = ValueType.Number)
-    private Long id;
+    @PersistentProperty(name = "id", valueType = ValueType.Text)
+    private String id;
 
     @PersistentProperty(name = "namespace", valueType = ValueType.Text)
     private String namespace;
@@ -21,24 +21,24 @@ public class DataSchema {
     @PersistentProperty(name = "name", valueType = ValueType.Text)
     private String name;
 
-    @PersistentProperty(name = "user_id", valueType = ValueType.Number)
-    private Long userId;
-
     @PersistentProperty(name = "type", valueType = ValueType.Text)
     private String type;
 
     @PersistentProperty(name = "description", valueType = ValueType.Text)
     private String description;
 
-    public DataSchema(String namespace, String name, Long userId, ValueType valueType,
-                      String desc) {
+    @PersistentProperty(name = "collect_task_id", valueType = ValueType.Text)
+    private String collectTaskId;
 
-        this.id = Utils.MURMUR3.hashBytes(String.format("%s:%s:%s", namespace, name, userId).getBytes())
-                .asLong();
+    public DataSchema(String namespace, String name, ValueType valueType,
+                      String desc, String collectTaskId) {
+
+        this.id = Utils.MURMUR3.hashBytes(String.format("%s:%s", namespace, name).getBytes())
+                               .toString();
         this.namespace = namespace;
         this.name = name;
-        this.userId = userId;
         this.type = valueType.name().toLowerCase();
         this.description = desc;
+        this.collectTaskId = collectTaskId;
     }
 }

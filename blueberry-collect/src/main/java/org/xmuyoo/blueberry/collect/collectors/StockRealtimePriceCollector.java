@@ -131,13 +131,13 @@ public class StockRealtimePriceCollector extends BasicCollector {
     @Override
     protected List<DataSchema> getDataSchemaList() {
         DataSchema recordTime = new DataSchema(STOCK_REALTIME_PRICE, "record_time",
-                                               userId(), ValueType.Datetime, "股票实时数据的时间点");
-        DataSchema value = new DataSchema(STOCK_REALTIME_PRICE, "value", userId(), ValueType.Number,
-                                          "股票实时价格的数据值");
-        DataSchema metric = new DataSchema(STOCK_REALTIME_PRICE, "metric", userId(), ValueType.Text,
-                                           "股票实时价格数据名称");
-        DataSchema tags = new DataSchema(STOCK_REALTIME_PRICE, "tags", userId(), ValueType.Json,
-                                         "股票实时价格数据的维度");
+                                               ValueType.Datetime, "股票实时数据的时间点", this.taskId());
+        DataSchema value = new DataSchema(STOCK_REALTIME_PRICE, "value", ValueType.Number,
+                                          "股票实时价格的数据值", this.taskId());
+        DataSchema metric = new DataSchema(STOCK_REALTIME_PRICE, "metric", ValueType.Text,
+                                           "股票实时价格数据名称", this.taskId());
+        DataSchema tags = new DataSchema(STOCK_REALTIME_PRICE, "tags", ValueType.Json,
+                                         "股票实时价格数据的维度", this.taskId());
         return Arrays.asList(recordTime, value, metric, tags);
     }
 
