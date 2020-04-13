@@ -111,7 +111,7 @@ public class HttpClient implements Lifecycle {
         @Override
         public void onEvent(RequestWrapper requestWrapper) {
             ResponseHandler handler = requestWrapper.responseHandler();
-            Request req = requestWrapper.request();
+            final Request req = requestWrapper.request();
 
             okhttp3.Request.Builder builder = new okhttp3.Request.Builder();
             builder.url(req.fullUrl());
@@ -165,7 +165,7 @@ public class HttpClient implements Lifecycle {
                                 kotlin.Pair<String, String> entry = iterator.next();
                                 headers.put(entry.getFirst(), entry.getSecond());
                             }
-                            handler.handle(new Response(headers, code, data));
+                            handler.handle(req, new Response(headers, code, data));
                             response.close();
                         }
                     });

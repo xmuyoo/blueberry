@@ -2,11 +2,12 @@ package org.xmuyoo.blueberry.collect.domains;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableSortedMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.util.Map;
 
 @Getter
 @Setter
@@ -25,5 +26,5 @@ public class SeriesData {
     private long tagId;
 
     @JsonProperty
-    private ImmutableSortedMap<String, String> tags;
+    private Map<String, String> tags;
 }

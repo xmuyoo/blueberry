@@ -81,7 +81,7 @@ public class StockRealtimePriceCollector extends BasicCollector {
 
         for (StockCode stockCode : this.stockCodes) {
             Request request = Requests.newStockCodeRequest(stockCode.code(), stockCode.exchange());
-            httpClient.async(request, response -> {
+            httpClient.async(request, (req, response) -> {
                 if (response.status() != HttpStatus.OK.value()) {
                     log.warn("Can not request stock realtime price for {}",
                              stockCode.toString());

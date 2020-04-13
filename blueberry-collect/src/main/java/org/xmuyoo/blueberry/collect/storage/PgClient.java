@@ -214,7 +214,7 @@ public class PgClient implements Lifecycle {
         return execute(sql, clazz, exceptionHandler, true);
     }
 
-    private <R, E> List<R> execute(String sql, Class<R> clazz,
+    private <R> List<R> execute(String sql, Class<R> clazz,
                                    Function<Exception, Void> exceptionHandler, boolean isQuery)
             throws SQLException {
 

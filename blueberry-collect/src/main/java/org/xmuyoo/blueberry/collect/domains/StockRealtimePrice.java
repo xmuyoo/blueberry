@@ -61,32 +61,85 @@ public class StockRealtimePrice extends Data {
     @Tag
     private String stockName;
 
+    @SeriesProperty(description = "开盘价")
     private double open;
+
+    @SeriesProperty(description = "收盘价")
     private double close;
+
+    @SeriesProperty(description = "当前价")
     private double current;
+
+    @SeriesProperty(description = " 最高价")
     private double highest;
+
+    @SeriesProperty(description = "最低价")
     private double lowest;
+
+    @SeriesProperty(description = "成交量")
     private long volume;
+
+    @SeriesProperty
     private double amount;
+
+    @SeriesProperty
     private long bidVolume1;
+
+    @SeriesProperty
     private double bidPrice1;
+
+    @SeriesProperty
     private long bidVolume2;
+
+    @SeriesProperty
     private double bidPrice2;
+
+    @SeriesProperty
     private long bidVolume3;
+
+    @SeriesProperty
     private double bidPrice3;
+
+    @SeriesProperty
     private long bidVolume4;
+
+    @SeriesProperty
     private double bidPrice4;
+
+    @SeriesProperty
     private long bidVolume5;
+
+    @SeriesProperty
     private double bidPrice5;
+
+    @SeriesProperty
     private long askVolume1;
+
+    @SeriesProperty
     private double askPrice1;
+
+    @SeriesProperty
     private long askVolume2;
+
+    @SeriesProperty
     private double askPrice2;
+
+    @SeriesProperty
     private long askVolume3;
+
+    @SeriesProperty
     private double askPrice3;
+
+    @SeriesProperty
     private long askVolume4;
+
+    @SeriesProperty
     private double askPrice4;
+
+    @SeriesProperty
     private long askVolume5;
+
+    @SeriesProperty
     private double askPrice5;
 
     public StockRealtimePrice(String id, DataType dataType,

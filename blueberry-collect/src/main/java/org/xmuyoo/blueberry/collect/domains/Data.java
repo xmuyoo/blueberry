@@ -10,10 +10,7 @@ import org.xmuyoo.blueberry.collect.utils.Utils;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Getter(AccessLevel.PUBLIC)
@@ -25,8 +22,8 @@ public abstract class Data {
     public static final String ID = "id";
     public static final String DATA_TYPE = "dataType";
     public static final String CREATED_TIME = "createdTime";
-
-    private static final String METRIC = "metric";
+    public static final String METRIC = "metric";
+    public static final String DESCRIPTION = "description";
 
     @JsonProperty("id")
     private String id;
@@ -54,17 +51,18 @@ public abstract class Data {
      */
     public List<SeriesData> toSeriesData() throws IllegalAccessException {
         Map<String, String> defaultTags = generateTags();
+        defaultTags = null != defaultTags ? defaultTags : new HashMap<>();
 
+        // Deal with tags fields firstly.
+        // Tag values can only be String, which is enough.
+        // Tag keys and values should be enumerable.
+        // Multiple levels of tags is not supported because any tags can be described
+        // in only one level; Tags are not configurations.
         Field[] declaredFields = this.getClass().getDeclaredFields();
-        Map<String, String> tmpTags = new HashMap<>();
         for (Field field : declaredFields) {
             if (!isAvailableTag(field))
                 continue;
 
-            // Tag values can only be String, which is enough.
-            // Tag keys and values should be enumerable.
-            // Multiple levels of tags is not supported because any tags can be described
-            // in only one level; Tags are not configurations.
             field.setAccessible(true);
             String fieldName = field.getName();
             Tag tagAnnotation = field.getAnnotation(Tag.class);
@@ -75,39 +73,42 @@ public abstract class Data {
                                       this.getClass().getSimpleName(), fieldName));
             }
             if (StringUtils.isNotBlank(tagAnnotation.name())) {
-                tmpTags.put(tagAnnotation.name(), (String) tagValue);
+                defaultTags.put(tagAnnotation.name(), (String) tagValue);
             } else {
-                tmpTags.put(fieldName, (String) tagValue);
+                defaultTags.put(fieldName, (String) tagValue);
             }
         }
-        if (null != defaultTags)
-            tmpTags.putAll(defaultTags);
 
+        // Deal with values fields
         List<SeriesData> seriesDataList = new ArrayList<>();
         for (Field field : declaredFields) {
             if (!isAvailableValue(field))
                 continue;
 
             field.setAccessible(true);
-            Map<String, String> fullTags = new HashMap<>(tmpTags);
+            Map<String, String> fullTags = new TreeMap<>(defaultTags);
             if (fullTags.containsKey(METRIC) || fullTags.containsKey(DATA_TYPE))
                 log.warn("{} and {} tags may be override", METRIC, DATA_TYPE);
 
             fullTags.put(METRIC, field.getName());
             fullTags.put(DATA_TYPE, this.dataType.toString());
-            ImmutableSortedMap<String, String> tags = ImmutableSortedMap.copyOf(fullTags);
 
             SeriesData seriesData = new SeriesData();
             Object value = field.get(this);
             if (!(value instanceof Number))
                 continue;
 
+            SeriesProperty seriesProperty = field.getAnnotation(SeriesProperty.class);
+            String description = seriesProperty.description();
+            if (StringUtils.isNotBlank(description))
+                fullTags.put(DESCRIPTION, description);
+
             seriesData.value(field.getDouble(this));
             // To milliseconds
             seriesData.createdTime(
                     this.createdTime.toEpochSecond(Utils.ZONE_OFFSET_8_HOURS) * 1000);
-            seriesData.tagId(tags.hashCode());
-            seriesData.tags(tags);
+            seriesData.tagId(fullTags.hashCode());
+            seriesData.tags(fullTags);
 
             seriesDataList.add(seriesData);
         }
@@ -122,6 +123,7 @@ public abstract class Data {
 
         Tag tagAnnotation = field.getAnnotation(Tag.class);
         return null != tagAnnotation;
+
     }
 
     private boolean isAvailableValue(Field field) {
@@ -130,6 +132,13 @@ public abstract class Data {
             return false;
 
         Tag tagAnnotation = field.getAnnotation(Tag.class);
-        return null == tagAnnotation;
+        if (null != tagAnnotation)
+            return false;
+
+        SeriesProperty seriesProperty = field.getAnnotation(SeriesProperty.class);
+        if (null == seriesProperty)
+            return false;
+
+        return seriesProperty.value();
     }
 }

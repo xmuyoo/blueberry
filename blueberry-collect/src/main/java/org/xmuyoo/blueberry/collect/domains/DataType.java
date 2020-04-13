@@ -1,7 +1,9 @@
 package org.xmuyoo.blueberry.collect.domains;
 
 public enum DataType {
-    StockPrice("StockPrice");
+    StockPrice("StockPrice"),
+    FinancialReport("FinancialReport")
+    ;
 
     final String name;
 
