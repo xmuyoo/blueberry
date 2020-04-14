@@ -1,9 +1,11 @@
 package org.xmuyoo.blueberry.collect.domains;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
@@ -15,6 +17,281 @@ import java.util.Map;
 @ToString(callSuper = true)
 @Slf4j
 public class FinancialReport extends Data {
+
+    private static final String CR_FROM_SG_PS_ZH = "销售商品、提供劳务收到的现金(万元)";
+    private static final String CR_FROM_SG_PS_EN = "Cash received from selling goods and providing services";
+    private static final String NI_IN_CD_DWB_ZH = "客户存款和同业存放款项净增加额(万元)";
+    private static final String NI_IN_CD_DWB_EN = "Net increase in customer deposits and deposits with banks";
+    private static final String NI_IN_BFTCB_ZH = "向中央银行借款净增加额(万元";
+    private static final String NI_IN_BFTCB_EN = "Net increase in borrowings from the central bank";
+    private static final String NI_IN_BFOFI_ZH = "向其他金融机构拆入资金净增加额(万元)";
+    private static final String NI_IN_BFOFI_EN = "Net increase in borrowings from other financial institutions";
+    private static final String CR_FROM_POOIC_ZH = "收到原保险合同保费取得的现金(万元)";
+    private static final String CR_FROM_POOIC_EN = "Cash received from premium of original insurance contract";
+    private static final String NCR_FROM_RB_ZH = "收到再保险业务现金净额(万元)";
+    private static final String NCR_FROM_RB_EN = "Net cash received from reinsurance business";
+    private static final String NI_IN_DAIOOTI_ZH = "保户储金及投资款净增加额(万元)";
+    private static final String NI_IN_DAIOOTI_EN = "Net increase in deposit and investment of the insured";
+    private static final String NI_IN_DOTFA_ZH = "处置交易性金融资产净增加额(万元)";
+    private static final String NI_IN_DOTFA_EN = "Net increase in disposal of trading financial assets";
+    private static final String CR_FOR_IHCAC_ZH = "收取利息、手续费及佣金的现金(万元)";
+    private static final String CR_FOR_IHCAC_EN = "Cash received for interest, handling charge and commission";
+    private static final String NI_IN_BF_ZH = "拆入资金净增加额(万元)";
+    private static final String NI_IN_BF_EN = "Net increase in borrowed funds";
+    private static final String NI_IN_PBF_ZH = "回购业务资金净增加额(万元)";
+    private static final String NI_IN_PBF_EN = "Net increase in repurchase business funds";
+    private static final String ROT_ZH = "收到的税费返还(万元)";
+    private static final String ROT_EN = "Refunds of taxes";
+    private static final String OCRRTOA_ZH = "收到的其他与经营活动有关的现金(万元)";
+    private static final String OCRRTOA_EN = "Other cash received related to operating activities";
+    private static final String S_OF_CIFOA_ZH = "经营活动现金流入小计(万元)";
+    private static final String S_OF_CIFOA_EN = "Subtotal of cash inflow from operating activities";
+    private static final String CP_FOR_GAS_ZH = "购买商品、接受劳务支付的现金(万元)";
+    private static final String CP_FOR_GAS_EN = "Cash paid for goods and services";
+    private static final String NI_IN_CLAA_ZH = "客户贷款及垫款净增加额(万元)";
+    private static final String NI_IN_CLAA_EN = "Net increase in customer loans and advances";
+    private static final String NI_IN_DWTCBAOB_ZH = "存放中央银行和同业款项净增加额(万元)";
+    private static final String NI_IN_DWTCBAOB_EN = "Net increase in deposits with the central bank and other banks";
+    private static final String CP_FOR_CUTOIC_ZH = "支付原保险合同赔付款项的现金(万元)";
+    private static final String CP_FOR_CUTOIC_EN = "Cash paid for compensation under the original insurance contract";
+    private static final String CP_FOR_IHCAC_ZH = "支付利息、手续费及佣金的现金(万元)";
+    private static final String CP_FOR_IHCAC_EN = "Cash paid for interest, handling charge and commission";
+    private static final String CP_FOR_PD_ZH = "支付保单红利的现金(万元)";
+    private static final String CP_FOR_PD_EN = "Cash paid for policy dividend";
+    private static final String CP_TO_AND_FOR_E_ZH = "支付给职工以及为职工支付的现金(万元)";
+    private static final String CP_TO_AND_FOR_E_EN = "Cash paid to and for employees";
+    private static final String TP_ZH = "支付的各项税费(万元)";
+    private static final String TP_EN = "Taxes paid";
+    private static final String OCPR_TO_OA_ZH = "支付的其他与经营活动有关的现金(万元)";
+    private static final String OCPR_TO_OA_EN = "Other cash paid related to operating activities";
+    private static final String SOCO_FROM_OA_ZH = "经营活动现金流出小计(万元)";
+    private static final String SOCO_FROM_OA_EN = "Subtotal of cash outflow from operating activities";
+    private static final String NCF_FROM_OA_ZH = "经营活动产生的现金流量净额(万元)";
+    private static final String NCF_FROM_OA_EN = "Net cash flow from operating activities";
+    private static final String CR_FROM_IR_ZH = "收回投资所收到的现金(万元)";
+    private static final String CR_FROM_IR_EN = "Cash received from investment recovery";
+    private static final String CR_FROM_II_ZH = "取得投资收益所收到的现金(万元)";
+    private static final String CR_FROM_II_EN = "Cash received from investment income";
+    private static final String NCR_FROM_DOFAIAAOLA_ZH = "处置固定资产、无形资产和其他长期资产所收回的现金净额(万元)";
+    private static final String NCR_FROM_DOFAIAAOLA_EN = "Net cash received from disposal of fixed assets, intangible assets and other long-term assets";
+    private static final String NCR_FROM_DOSAOBU_ZH = "处置子公司及其他营业单位收到的现金净额(万元)";
+    private static final String NCR_FROM_DOSAOBU_EN = "Net cash received from disposal of subsidiaries and other business units";
+    private static final String OCRR_TO_IA_ZH = "收到的其他与投资活动有关的现金(万元)";
+    private static final String OCRR_TO_IA_EN = "Other cash received related to investment activities";
+    private static final String CR_FROM_PAFDR_ZH = "减少质押和定期存款所收到的现金(万元)";
+    private static final String CR_FROM_PAFDR_EN = "Cash received from pledge and fixed deposit reduction";
+    private static final String SOCI_FROM_IA_ZH = "投资活动现金流入小计(万元)";
+    private static final String SOCI_FROM_IA_EN = "Subtotal of cash inflow from investment activities";
+    private static final String CP_FOR_AACOFAIAAOLA_ZH = "购建固定资产、无形资产和其他长期资产所支付的现金(万元)";
+    private static final String CP_FOR_AACOFAIAAOLA_EN = "Cash paid for acquisition and construction of fixed assets, intangible assets and other long-term assets";
+    private static final String CP_FOR_I_ZH = "投资所支付的现金(万元)";
+    private static final String CP_FOR_I_EN = "Cash paid for investment";
+    private static final String NI_IN_PL_ZH = "质押贷款净增加额(万元)";
+    private static final String NI_IN_PL_EN = "Net increase in pledged loans";
+    private static final String NCP_BY_SAOBU_ZH = "取得子公司及其他营业单位支付的现金净额(万元)";
+    private static final String NCP_BY_SAOBU_EN = "Net cash paid by subsidiaries and other business units";
+    private static final String OCPR_TO_IA_ZH = "支付的其他与投资活动有关的现金(万元)";
+    private static final String OCPR_TO_IA_EN = "Other cash paid related to investment activities";
+    private static final String CP_FOR_IOPAFD_ZH = "增加质押和定期存款所支付的现金(万元)";
+    private static final String CP_FOR_IOPAFD_EN = "Cash paid for increase of pledge and fixed deposit";
+    private static final String SOCO_FROM_IA_ZH = "投资活动现金流出小计(万元)";
+    private static final String SOCO_FROM_IA_EN = "Subtotal of cash outflow from investment activities";
+    private static final String NCF_FROM_IA_ZH = "投资活动产生的现金流量净额(万元)";
+    private static final String NCF_FROM_IA_EN = "Net cash flow from investment activities";
+    private static final String CR_FROM_IA_ZH = "吸收投资收到的现金(万元)";
+    private static final String CR_FROM_IA_EN = "Cash received from investment absorption";
+    private static final String INCLUDING_CR_FROM_MS_IBD_ZH = "其中：子公司吸收少数股东投资收到的现金(万元)";
+    private static final String INCLUDING_CR_FROM_MS_IBD_EN = "Including: cash received from minority shareholders' investment by subsidiaries";
+    private static final String CR_FROM_B_ZH = "取得借款收到的现金(万元)";
+    private static final String CR_FROM_B_EN = "Cash received from borrowing";
+    private static final String CR_FROM_BI_ZH = "发行债券收到的现金(万元)";
+    private static final String CR_FROM_BI_EN = "Cash received from bond issuance";
+    private static final String CR_FROM_OFA_ZH = "收到其他与筹资活动有关的现金(万元)";
+    private static final String CR_FROM_OFA_EN = "Cash received from other financing activities";
+    private static final String SOCI_FROM_FA_ZH = "筹资活动现金流入小计(万元)";
+    private static final String SOCI_FROM_FA_EN = "Subtotal of cash inflow from financing activities";
+    private static final String CP_FOR_DR_ZH = "偿还债务支付的现金(万元)";
+    private static final String CP_FOR_DR_EN = "Cash paid for debt repayment";
+    private static final String CP_FOR_DODPOI_ZH = "分配股利、利润或偿付利息所支付的现金(万元)";
+    private static final String CP_FOR_DODPOI_EN = "Cash paid for distribution of dividends, profits or interest";
+    private static final String INCLUDING_DAPPBSTMS_ZH = "其中：子公司支付给少数股东的股利、利润(万元)";
+    private static final String INCLUDING_DAPPBSTMS_EN = "Including: dividends and profits paid by subsidiaries to minority shareholders";
+    private static final String CP_FOR_OFA_ZH = "支付其他与筹资活动有关的现金(万元)";
+    private static final String CP_FOR_OFA_EN = "Cash paid for other financing activities";
+    private static final String SOCR_FROM_FA_ZH = "筹资活动现金流出小计(万元)";
+    private static final String SOCR_FROM_FA_EN = "Subtotal of cash outflow from financing activities";
+    private static final String NCF_FROM_FA_ZH = "筹资活动产生的现金流量净额(万元)";
+    private static final String NCF_FROM_FA_EN = "Net cash flow from financing activities";
+    private static final String EOERC_ON_CACE_ZH = "汇率变动对现金及现金等价物的影响(万元)";
+    private static final String EOERC_ON_CACE_EN = "Effect of exchange rate changes on cash and cash equivalents";
+    private static final String NI_IN_CACE_ZH = "现金及现金等价物净增加额(万元)";
+    private static final String NI_IN_CACE_EN = "Net increase in cash and cash equivalents";
+    private static final String ADD_BOFCACE_AT_TBOTP_ZH = "加:期初现金及现金等价物余额(万元)";
+    private static final String ADD_BOFCACE_AT_TBOTP_EN = "Add: balance of cash and cash equivalents at the beginning of the period";
+    private static final String BOCACE_AT_TEOTP_ZH = "期末现金及现金等价物余额(万元)";
+    private static final String BOCACE_AT_TEOTP_EN = "Balance of cash and cash equivalents at the end of the period";
+    private static final String NP_ZH = "净利润(万元)";
+    private static final String NP_EN = "Net Profit";
+    private static final String MI_ZH = "少数股东损益(万元)";
+    private static final String MI_EN = "Minority interest";
+    private static final String UIL_ZH = "未确认的投资损失(万元)";
+    private static final String UIL_EN = "Unrecognized investment loss";
+    private static final String P_FOR_IOA_ZH = "资产减值准备(万元)";
+    private static final String P_FOR_IOA_EN = "Provision for impairment of assets";
+    private static final String DOFA_DOOAGA_DOPM_ZH = "固定资产折旧、油气资产折耗、生产性物资折旧(万元)";
+    private static final String DOFA_DOOAGA_DOPM_EN = "Depreciation of fixed assets, depletion of oil and gas assets, depreciation of productive materials";
+    private static final String A_OF_IA_ZH = "无形资产摊销(万元)";
+    private static final String A_OF_IA_EN = "Amortization of intangible assets";
+    private static final String A_OF_LUE_ZH = "长期待摊费用摊销(万元)";
+    private static final String A_OF_LUE_EN = "Amortization of long-term unamortized expense";
+    private static final String D_OF_UE_ZH = "待摊费用的减少(万元)";
+    private static final String D_OF_UE_EN = "Decrease of unamortized expense";
+    private static final String I_IN_AE_ZH = "预提费用的增加(万元)";
+    private static final String I_IN_AE_EN = "Increase in accrued expense";
+    private static final String LOD_OF_FA_IA_AND_OLA_ZH = "处置固定资产、无形资产和其他长期资产的损失(万元)";
+    private static final String LOD_OF_FA_IA_AND_OLA_EN = "Loss on disposal of fixed assets, intangible assets and other long-term asset";
+    private static final String L_ON_ROFA_ZH = "固定资产报废损失(万元)";
+    private static final String L_ON_ROFA_EN = "Loss on retirement of fixed asset";
+    private static final String L_FROM_CIFY_ZH = "公允价值变动损失(万元)";
+    private static final String L_FROM_CIFY_EN = "Loss from changes in fair value";
+    private static final String I_IN_DI_ZH = "递延收益增加(减：减少)(万元)";
+    private static final String I_IN_DI_EN = "Increase in deferred income (minus: decrease)";
+    private static final String AL_ZH = "预计负债(万元)";
+    private static final String AL_EN = "Accrued liabilities";
+    private static final String FE_ZH = "财务费用(万元)";
+    private static final String FE_EN = "Financial Expense";
+    private static final String IL_ZH = "投资损失(万元)";
+    private static final String IL_EN = "Investment loss";
+    private static final String D_OF_DITA_ZH = "递延所得税资产减少(万元)";
+    private static final String D_OF_DITA_EN = "Decrease of deferred income tax assets";
+    private static final String I_IN_DITL_ZH = "递延所得税负债增加(万元)";
+    private static final String I_IN_DITL_EN = "Increase in deferred income tax liabilities";
+    private static final String D_IN_I_ZH = "存货的减少(万元)";
+    private static final String D_IN_I_EN = "Decrease in inventories";
+    private static final String D_OF_OR_ZH = "经营性应收项目的减少(万元)";
+    private static final String D_OF_OR_EN = "Decrease of operating receivables";
+    private static final String I_IN_OP_ZH = "经营性应付项目的增加(万元)";
+    private static final String I_IN_OP_EN = "Increase in operating payables";
+    private static final String D_OF_CBUF_ZH = "已完工尚未结算款的减少(减:增加)(万元)";
+    private static final String D_OF_CBUF_EN = "Decrease of completed but unsettled funds (minus: increase)";
+    private static final String I_OF_SBNCP_ZH = "已结算尚未完工款的增加(减:减少)(万元)";
+    private static final String I_OF_SBNCP_EN = "Increase of settled but not completed payment  (minus: decrease)";
+    private static final String OTHERS_ZH = "其他(万元)";
+    private static final String OTHERS_EN = "Others";
+    private static final String D_TO_C_ZH = "债务转为资本(万元)";
+    private static final String D_TO_C_EN = "Debt to capital";
+    private static final String CBD_WITHIN_OY_ZH = "一年内到期的可转换公司债券(万元)";
+    private static final String CBD_WITHIN_OY_EN = "Convertible bonds due within one year";
+    private static final String FAUFL_ZH = "融资租入固定资产(万元)";
+    private static final String FAUFL_EN = "Fixed assets under financing leas";
+    private static final String CB_OF_C_ZH = "现金的期末余额(万元)";
+    private static final String CB_OF_C_EN = "Closing balance of cash";
+    private static final String OB_OF_C_ZH = "现金的期初余额(万元)";
+    private static final String OB_OF_C_EN = "Opening balance of cash";
+    private static final String CB_OF_CE_ZH = "现金等价物的期末余额(万元)";
+    private static final String CB_OF_CE_EN = "Closing balance of cash equivalents";
+    private static final String OB_OF_CE_ZH = "现金等价物的期初余额(万元)";
+    private static final String OB_OF_CE_EN = "Opening balance of cash equivalents";
+
+    public static final Map<String, Pair<String, String>> INDICATOR_SCHEMA_NAME_MAPPING =
+            ImmutableMap.<String, Pair<String, String>>builder()
+                    .put("报告日期", Pair.of("datetime", "datetime"))
+                    .put(CR_FROM_SG_PS_ZH, Pair.of("cr_from_sg_ps", CR_FROM_SG_PS_EN))
+                    .put(NI_IN_CD_DWB_ZH, Pair.of("ni_in_cd_dwb", NI_IN_CD_DWB_EN))
+                    .put(NI_IN_BFTCB_ZH, Pair.of("ni_in_bftcb", NI_IN_BFTCB_EN))
+                    .put(NI_IN_BFOFI_ZH, Pair.of("ni_in_bfofi", NI_IN_BFOFI_EN))
+                    .put(CR_FROM_POOIC_ZH, Pair.of("cr_from_pooic", CR_FROM_POOIC_EN))
+                    .put(NCR_FROM_RB_ZH, Pair.of("ncr_from_rb", NCR_FROM_RB_EN))
+                    .put(NI_IN_DAIOOTI_ZH, Pair.of("ni_in_daiooti", NI_IN_DAIOOTI_EN))
+                    .put(NI_IN_DOTFA_ZH, Pair.of("ni_in_dotfa", NI_IN_DOTFA_EN))
+                    .put(CR_FOR_IHCAC_ZH, Pair.of("cr_for_ihcac", CR_FOR_IHCAC_EN))
+                    .put(NI_IN_BF_ZH, Pair.of("ni_in_bf", NI_IN_BF_EN))
+                    .put(NI_IN_PBF_ZH, Pair.of("ni_in_pbf", NI_IN_PBF_EN))
+                    .put(ROT_ZH, Pair.of("rot", ROT_EN))
+                    .put(OCRRTOA_ZH, Pair.of("ocrrtoa", OCRRTOA_EN))
+                    .put(S_OF_CIFOA_ZH, Pair.of("s_of_cifoa", S_OF_CIFOA_EN))
+                    .put(CP_FOR_GAS_ZH, Pair.of("cp_for_gas", CP_FOR_GAS_EN))
+                    .put(NI_IN_CLAA_ZH, Pair.of("ni_in_claa", NI_IN_CLAA_EN))
+                    .put(NI_IN_DWTCBAOB_ZH, Pair.of("ni_in_dwtcbaob", NI_IN_DWTCBAOB_EN))
+                    .put(CP_FOR_CUTOIC_ZH, Pair.of("cp_for_cutoic", CP_FOR_CUTOIC_EN))
+                    .put(CP_FOR_IHCAC_ZH, Pair.of("cp_for_ihcac", CP_FOR_IHCAC_EN))
+                    .put(CP_FOR_PD_ZH, Pair.of("cp_for_pd", CP_FOR_PD_EN))
+                    .put(CP_TO_AND_FOR_E_ZH, Pair.of("cp_to_and_for_e", CP_TO_AND_FOR_E_EN))
+                    .put(TP_ZH, Pair.of("tp", TP_EN))
+                    .put(OCPR_TO_OA_ZH, Pair.of("ocpr_to_oa", OCPR_TO_OA_EN))
+                    .put(SOCO_FROM_OA_ZH, Pair.of("soco_from_oa", SOCO_FROM_OA_EN))
+                    .put(NCF_FROM_OA_ZH, Pair.of("ncf_from_oa", NCF_FROM_OA_EN))
+                    .put("经营活动产生现金流量净额(万元)", Pair.of("ncf_from_oa", NCF_FROM_OA_EN))
+                    .put(CR_FROM_IR_ZH, Pair.of("cr_from_ir", CR_FROM_IR_EN))
+                    .put(CR_FROM_II_ZH, Pair.of("cr_from_ii", CR_FROM_II_EN))
+                    .put(NCR_FROM_DOFAIAAOLA_ZH,
+                            Pair.of("ncr_from_dofaiaaola", NCR_FROM_DOFAIAAOLA_EN))
+                    .put(NCR_FROM_DOSAOBU_ZH, Pair.of("ncr_from_dosaobu", NCR_FROM_DOSAOBU_EN))
+                    .put(OCRR_TO_IA_ZH, Pair.of("ocrr_to_ia", OCRR_TO_IA_EN))
+                    .put(CR_FROM_PAFDR_ZH, Pair.of("cr_from_pafdr", CR_FROM_PAFDR_EN))
+                    .put(SOCI_FROM_IA_ZH, Pair.of("soci_from_ia", SOCI_FROM_IA_EN))
+                    .put(CP_FOR_AACOFAIAAOLA_ZH,
+                            Pair.of("cp_for_aacofaiaaola", CP_FOR_AACOFAIAAOLA_EN))
+                    .put(CP_FOR_I_ZH, Pair.of("cp_for_i", CP_FOR_I_EN))
+                    .put(NI_IN_PL_ZH, Pair.of("ni_in_pl", NI_IN_PL_EN))
+                    .put(NCP_BY_SAOBU_ZH, Pair.of("ncp_by_saobu", NCP_BY_SAOBU_EN))
+                    .put(OCPR_TO_IA_ZH, Pair.of("ocpr_to_ia", OCPR_TO_IA_EN))
+                    .put(CP_FOR_IOPAFD_ZH, Pair.of("cp_for_iopafd", CP_FOR_IOPAFD_EN))
+                    .put(SOCO_FROM_IA_ZH, Pair.of("soco_from_ia", SOCO_FROM_IA_EN))
+                    .put(NCF_FROM_IA_ZH, Pair.of("ncf_from_ia", NCF_FROM_IA_EN))
+                    .put(CR_FROM_IA_ZH, Pair.of("cr_from_ia", CR_FROM_IA_EN))
+                    .put(INCLUDING_CR_FROM_MS_IBD_ZH,
+                            Pair.of("including_cr_from_ms_ibs", INCLUDING_CR_FROM_MS_IBD_EN))
+                    .put(CR_FROM_B_ZH, Pair.of("cr_from_b", CR_FROM_B_EN))
+                    .put(CR_FROM_BI_ZH, Pair.of("cr_from_bi", CR_FROM_BI_EN))
+                    .put(CR_FROM_OFA_ZH, Pair.of("cr_from_ofa", CR_FROM_OFA_EN))
+                    .put(SOCI_FROM_FA_ZH, Pair.of("soci_from_fa", SOCI_FROM_FA_EN))
+                    .put(CP_FOR_DR_ZH, Pair.of("cp_for_dr", CP_FOR_DR_EN))
+                    .put(CP_FOR_DODPOI_ZH, Pair.of("cp_for_dodpoi", CP_FOR_DODPOI_EN))
+                    .put(INCLUDING_DAPPBSTMS_ZH,
+                            Pair.of("including_dappbstms", INCLUDING_DAPPBSTMS_EN))
+                    .put(CP_FOR_OFA_ZH, Pair.of("cp_for_ofa", CP_FOR_OFA_EN))
+                    .put(SOCR_FROM_FA_ZH, Pair.of("socr_from_fa", SOCR_FROM_FA_EN))
+                    .put(NCF_FROM_FA_ZH, Pair.of("ncf_from_fa", NCF_FROM_FA_EN))
+                    .put(EOERC_ON_CACE_ZH, Pair.of("eoerc_on_cace", EOERC_ON_CACE_EN))
+                    .put(NI_IN_CACE_ZH, Pair.of("ni_in_cace", NI_IN_CACE_EN))
+                    .put("现金及现金等价物的净增加额(万元)", Pair.of("ni_in_cace", NI_IN_CACE_EN))
+                    .put(ADD_BOFCACE_AT_TBOTP_ZH,
+                            Pair.of("add_bofcace_at_tbotp", ADD_BOFCACE_AT_TBOTP_EN))
+                    .put(BOCACE_AT_TEOTP_ZH, Pair.of("bocace_at_teotp", BOCACE_AT_TEOTP_EN))
+                    .put(NP_ZH, Pair.of("np", NP_EN))
+                    .put(MI_ZH, Pair.of("mi", MI_EN))
+                    .put(UIL_ZH, Pair.of("uil", UIL_EN))
+                    .put(P_FOR_IOA_ZH, Pair.of("p_for_ioa", P_FOR_IOA_EN))
+                    .put(DOFA_DOOAGA_DOPM_ZH, Pair.of("dofa_dooaga_dopm", DOFA_DOOAGA_DOPM_EN))
+                    .put(A_OF_IA_ZH, Pair.of("a_of_ia", A_OF_IA_EN))
+                    .put(A_OF_LUE_ZH, Pair.of("a_of_lue", A_OF_LUE_EN))
+                    .put(D_OF_UE_ZH, Pair.of("d_of_ue", D_OF_UE_EN))
+                    .put(I_IN_AE_ZH, Pair.of("i_in_ae", I_IN_AE_EN))
+                    .put(LOD_OF_FA_IA_AND_OLA_ZH,
+                            Pair.of("lod_of_fa_ia_and_ola", LOD_OF_FA_IA_AND_OLA_EN))
+                    .put(L_ON_ROFA_ZH, Pair.of("l_on_rofa", L_ON_ROFA_EN))
+                    .put(L_FROM_CIFY_ZH, Pair.of("l_from_cifv", L_FROM_CIFY_EN))
+                    .put(I_IN_DI_ZH, Pair.of("i_in_di", I_IN_DI_EN))
+                    .put(AL_ZH, Pair.of("al", AL_EN))
+                    .put(FE_ZH, Pair.of("fe", FE_EN))
+                    .put(IL_ZH, Pair.of("il", IL_EN))
+                    .put(D_OF_DITA_ZH, Pair.of("d_of_dita", D_OF_DITA_EN))
+                    .put(I_IN_DITL_ZH, Pair.of("i_in_ditl", I_IN_DITL_EN))
+                    .put(D_IN_I_ZH, Pair.of("d_in_i", D_IN_I_EN))
+                    .put(D_OF_OR_ZH, Pair.of("d_of_or", D_OF_OR_EN))
+                    .put(I_IN_OP_ZH, Pair.of("i_in_op", I_IN_OP_EN))
+                    .put(D_OF_CBUF_ZH, Pair.of("d_of_cbuf", D_OF_CBUF_EN))
+                    .put(I_OF_SBNCP_ZH, Pair.of("i_of_sbncp", I_OF_SBNCP_EN))
+                    .put(OTHERS_ZH, Pair.of("others", OTHERS_EN))
+                    .put(D_TO_C_ZH, Pair.of("d_to_c", D_TO_C_EN))
+                    .put(CBD_WITHIN_OY_ZH, Pair.of("cbd_within_oy", CBD_WITHIN_OY_EN))
+                    .put(FAUFL_ZH, Pair.of("faufl", FAUFL_EN))
+                    .put(CB_OF_C_ZH, Pair.of("cb_of_c", CB_OF_C_EN))
+                    .put(OB_OF_C_ZH, Pair.of("ob_of_c", OB_OF_C_EN))
+                    .put(CB_OF_CE_ZH, Pair.of("cb_of_ce", CB_OF_CE_EN))
+                    .put(OB_OF_CE_ZH, Pair.of("ob_of_ce", OB_OF_CE_EN))
+                    .build();
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-mm-dd");
@@ -56,265 +333,265 @@ public class FinancialReport extends Data {
     @Tag
     private String stockName;
 
-    @SeriesProperty(description = "Cash received from selling goods and providing services")
+    @SeriesProperty(description = CR_FROM_SG_PS_ZH + " " + CR_FROM_SG_PS_EN)
     private double cr_from_sg_ps;
 
-    @SeriesProperty(description = "Net increase in customer deposits and deposits with banks")
+    @SeriesProperty(description = NI_IN_CD_DWB_ZH + " " + NI_IN_BF_EN)
     private double ni_in_cd_dwb;
 
-    @SeriesProperty(description = "Net increase in borrowings from the central bank")
+    @SeriesProperty(description = NI_IN_BFTCB_ZH + " " + NI_IN_BFTCB_EN)
     private double ni_in_bftcb;
 
-    @SeriesProperty(description = "Net increase in borrowings from other financial institutions")
+    @SeriesProperty(description = NI_IN_BFOFI_ZH + " " + NI_IN_BFOFI_EN)
     private double ni_in_bfofi;
 
-    @SeriesProperty(description = "Cash received from premium of original insurance contract")
+    @SeriesProperty(description = CR_FROM_POOIC_ZH + " " + CR_FROM_POOIC_EN)
     private double cr_from_pooic;
 
-    @SeriesProperty(description = "Net cash received from reinsurance business")
+    @SeriesProperty(description = NCR_FROM_RB_ZH + " " + NCR_FROM_RB_EN)
     private double ncr_from_rb;
 
-    @SeriesProperty(description = "Net increase in deposit and investment of the insured")
+    @SeriesProperty(description = NI_IN_DAIOOTI_ZH + " " + NI_IN_DAIOOTI_EN)
     private double ni_in_daiooti;
 
-    @SeriesProperty(description = "Net increase in disposal of trading financial assets")
+    @SeriesProperty(description = NI_IN_DOTFA_ZH + " " + NI_IN_DOTFA_EN)
     private double ni_in_dotfa;
 
-    @SeriesProperty(description = "Cash received for interest, handling charge and commission")
+    @SeriesProperty(description = CR_FOR_IHCAC_ZH + " " + CR_FOR_IHCAC_EN)
     private double cr_for_ihcac;
 
-    @SeriesProperty(description = "Net increase in borrowed funds")
+    @SeriesProperty(description = NI_IN_BF_ZH + " " + NI_IN_BF_EN)
     private double ni_in_bf;
 
-    @SeriesProperty(description = "Net increase in repurchase business funds")
+    @SeriesProperty(description = NI_IN_PBF_ZH + " " + NI_IN_PBF_EN)
     private double ni_in_pbf;
 
-    @SeriesProperty(description = "Refunds of taxes")
+    @SeriesProperty(description = ROT_ZH + " " + ROT_EN)
     private double rot;
 
-    @SeriesProperty(description = "Other cash received related to operating activities")
+    @SeriesProperty(description = OCRRTOA_ZH + " " + OCRRTOA_EN)
     private double ocrrtoa;
 
-    @SeriesProperty(description = "Subtotal of cash inflow from operating activities")
+    @SeriesProperty(description = S_OF_CIFOA_ZH + " " + S_OF_CIFOA_EN)
     private double s_of_cifoa;
 
-    @SeriesProperty(description = "Cash paid for goods and services")
+    @SeriesProperty(description = CP_FOR_GAS_ZH + " " + CP_FOR_GAS_EN)
     private double cp_for_gas;
 
-    @SeriesProperty(description = "Net increase in customer loans and advances")
+    @SeriesProperty(description = NI_IN_CLAA_ZH + " " + NI_IN_CLAA_EN)
     private double ni_in_claa;
 
-    @SeriesProperty(description = "Net increase in deposits with the central bank and other banks")
+    @SeriesProperty(description = NI_IN_DWTCBAOB_ZH + " " + NI_IN_DWTCBAOB_EN)
     private double ni_in_dwtcbaob;
 
-    @SeriesProperty(description = "Cash paid for compensation under the original insurance contract")
+    @SeriesProperty(description = CP_FOR_CUTOIC_ZH + " " + CP_FOR_CUTOIC_EN)
     private double cp_for_cutoic;
 
-    @SeriesProperty(description = "Cash paid for interest, handling charge and commission")
-    private double cp_forihcac;
+    @SeriesProperty(description = CP_FOR_IHCAC_ZH + " " + CP_FOR_IHCAC_EN)
+    private double cp_for_ihcac;
 
-    @SeriesProperty(description = "Cash paid for policy dividend")
+    @SeriesProperty(description = CP_FOR_PD_ZH + " " + CP_FOR_PD_EN)
     private double cp_for_pd;
 
-    @SeriesProperty(description = "Cash paid to and for employees")
+    @SeriesProperty(description = CP_TO_AND_FOR_E_ZH + " " + CP_TO_AND_FOR_E_EN)
     private double cp_to_and_for_e;
 
-    @SeriesProperty(description = "Taxes paid")
+    @SeriesProperty(description = TP_ZH + " " + TP_EN)
     private double tp;
 
-    @SeriesProperty(description = "Other cash paid related to operating activities")
+    @SeriesProperty(description = OCPR_TO_OA_ZH + " " + OCPR_TO_OA_EN)
     private double ocpr_to_oa;
 
-    @SeriesProperty(description = "Subtotal of cash outflow from operating activities")
+    @SeriesProperty(description = SOCO_FROM_OA_ZH + " " + SOCO_FROM_OA_EN)
     private double soco_from_oa;
 
-    @SeriesProperty(description = "Net cash flow from operating activities")
+    @SeriesProperty(description = NCF_FROM_OA_ZH + " " + NCF_FROM_OA_EN)
     private double ncf_from_oa;
 
-    @SeriesProperty(description = "Cash received from investment recovery")
+    @SeriesProperty(description = CR_FROM_IR_ZH + " " + CR_FROM_IR_EN)
     private double cr_from_ir;
 
-    @SeriesProperty(description = "Cash received from investment income")
+    @SeriesProperty(description = CR_FROM_II_ZH + " " + CR_FROM_II_EN)
     private double cr_from_ii;
 
-    @SeriesProperty(description = "Net cash received from disposal of fixed assets, intangible assets and other long-term assets")
+    @SeriesProperty(description = NCR_FROM_DOFAIAAOLA_ZH + " " + NCR_FROM_DOFAIAAOLA_EN)
     private double ncr_from_dofaiaaola;
 
-    @SeriesProperty(description = "Net cash received from disposal of subsidiaries and other business units")
+    @SeriesProperty(description = NCR_FROM_DOSAOBU_ZH + " " + NCR_FROM_DOSAOBU_EN)
     private double ncr_from_dosaobu;
 
-    @SeriesProperty(description = "Other cash received related to investment activities")
+    @SeriesProperty(description = OCRR_TO_IA_ZH + " " + OCRR_TO_IA_EN)
     private double ocrr_to_ia;
 
-    @SeriesProperty(description = "Cash received from pledge and fixed deposit reduction")
+    @SeriesProperty(description = CR_FROM_PAFDR_ZH + " " + CR_FROM_PAFDR_EN)
     private double cr_from_pafdr;
 
-    @SeriesProperty(description = "Subtotal of cash inflow from investment activities")
+    @SeriesProperty(description = SOCI_FROM_IA_ZH + " " + SOCI_FROM_IA_EN)
     private double soci_from_ia;
 
-    @SeriesProperty(description = "Cash paid for acquisition and construction of fixed assets, intangible assets and other long-term assets")
+    @SeriesProperty(description = CP_FOR_AACOFAIAAOLA_ZH + " " + CP_FOR_AACOFAIAAOLA_EN)
     private double cp_for_aacofaiaaola;
 
-    @SeriesProperty(description = "Cash paid for investment")
+    @SeriesProperty(description = CP_FOR_I_ZH + " " + CP_FOR_I_EN)
     private double cp_for_i;
 
-    @SeriesProperty(description = "Net increase in pledged loans")
+    @SeriesProperty(description = NI_IN_PL_ZH + " " + NI_IN_PL_EN)
     private double ni_in_pl;
 
-    @SeriesProperty(description = "Net cash paid by subsidiaries and other business units")
+    @SeriesProperty(description = NCP_BY_SAOBU_ZH + " " + NCP_BY_SAOBU_EN)
     private double ncp_by_saobu;
 
-    @SeriesProperty(description = "Other cash paid related to investment activities")
+    @SeriesProperty(description = OCPR_TO_IA_ZH + " " + OCPR_TO_IA_EN)
     private double ocpr_to_ia;
 
-    @SeriesProperty(description = "Cash paid for increase of pledge and fixed deposit")
+    @SeriesProperty(description = CP_FOR_IOPAFD_ZH + " " + CP_FOR_IOPAFD_EN)
     private double cp_for_iopafd;
 
-    @SeriesProperty(description = "Subtotal of cash outflow from investment activities")
+    @SeriesProperty(description = SOCO_FROM_IA_ZH + " " + SOCO_FROM_IA_EN)
     private double soco_from_ia;
 
-    @SeriesProperty(description = "Net cash flow from investment activities")
+    @SeriesProperty(description = NCF_FROM_IA_ZH + " " + NCF_FROM_IA_EN)
     private double ncf_from_ia;
 
-    @SeriesProperty(description = "Cash received from investment absorption")
+    @SeriesProperty(description = CR_FROM_IA_ZH + " " + CR_FROM_IA_EN)
     private double cr_from_ia;
 
-    @SeriesProperty(description = "Including: cash received from minority shareholders' investment by subsidiaries")
+    @SeriesProperty(description = INCLUDING_CR_FROM_MS_IBD_ZH + " " + INCLUDING_CR_FROM_MS_IBD_EN)
     private double including_cr_from_ms_ibs;
 
-    @SeriesProperty(description = "Cash received from borrowing")
+    @SeriesProperty(description = CR_FROM_B_ZH + " " + CR_FROM_B_EN)
     private double cr_from_b;
 
-    @SeriesProperty(description = "Cash received from bond issuance")
+    @SeriesProperty(description = CR_FROM_BI_ZH + " " + CR_FROM_BI_EN)
     private double cr_from_bi;
 
-    @SeriesProperty(description = "Cash received from other financing activities")
+    @SeriesProperty(description = CR_FROM_OFA_ZH + " " + CR_FROM_OFA_EN)
     private double cr_from_ofa;
 
-    @SeriesProperty(description = "Subtotal of cash inflow from financing activities")
+    @SeriesProperty(description = SOCI_FROM_FA_ZH + " " + SOCI_FROM_FA_EN)
     private double soci_from_fa;
 
-    @SeriesProperty(description = "Cash paid for debt repayment")
+    @SeriesProperty(description = CP_FOR_DR_ZH + " " + CP_FOR_DR_EN)
     private double cp_for_dr;
 
-    @SeriesProperty(description = "Cash paid for distribution of dividends, profits or interest")
+    @SeriesProperty(description = CP_FOR_DODPOI_ZH + " " + CP_FOR_DODPOI_EN)
     private double cp_for_dodpoi;
 
-    @SeriesProperty(description = "Including: dividends and profits paid by subsidiaries to minority shareholders")
+    @SeriesProperty(description = INCLUDING_DAPPBSTMS_ZH + " " + INCLUDING_DAPPBSTMS_EN)
     private double including_dappbstms;
 
-    @SeriesProperty(description = "Cash paid for other financing activities")
+    @SeriesProperty(description = CP_FOR_OFA_ZH + " " + CP_FOR_OFA_EN)
     private double cp_for_ofa;
 
-    @SeriesProperty(description = "Subtotal of cash outflow from financing activities")
+    @SeriesProperty(description = SOCR_FROM_FA_ZH + " " + SOCR_FROM_FA_EN)
     private double socr_from_fa;
 
-    @SeriesProperty(description = "Net cash flow from financing activities")
+    @SeriesProperty(description = NCF_FROM_FA_ZH + " " + NCF_FROM_FA_EN)
     private double ncf_from_fa;
 
-    @SeriesProperty(description = "Effect of exchange rate changes on cash and cash equivalents")
+    @SeriesProperty(description = EOERC_ON_CACE_ZH + " " + EOERC_ON_CACE_EN)
     private double eoerc_on_cace;
 
-    @SeriesProperty(description = "Net increase in cash and cash equivalents")
+    @SeriesProperty(description = NI_IN_CACE_ZH + " " + NI_IN_CACE_EN)
     private double ni_in_cace;
 
-    @SeriesProperty(description = "Add: balance of cash and cash equivalents at the beginning of the period")
+    @SeriesProperty(description = ADD_BOFCACE_AT_TBOTP_ZH + " " + ADD_BOFCACE_AT_TBOTP_EN)
     private double add_bofcace_at_tbotp;
 
-    @SeriesProperty(description = "Balance of cash and cash equivalents at the end of the period")
+    @SeriesProperty(description = BOCACE_AT_TEOTP_ZH + " " + BOCACE_AT_TEOTP_EN)
     private double bocace_at_teotp;
 
-    @SeriesProperty(description = "Net Profit")
+    @SeriesProperty(description = NP_ZH + " " + NP_EN)
     private double np;
 
-    @SeriesProperty(description = "Minority interest")
+    @SeriesProperty(description = MI_ZH + " " + MI_EN)
     private double mi;
 
-    @SeriesProperty(description = "Unrecognized investment loss")
+    @SeriesProperty(description = UIL_ZH + " " + UIL_EN)
     private double uil;
 
-    @SeriesProperty(description = "Provision for impairment of assets")
+    @SeriesProperty(description = P_FOR_IOA_ZH + " " + P_FOR_IOA_EN)
     private double p_for_ioa;
 
-    @SeriesProperty(description = "Depreciation of fixed assets, depletion of oil and gas assets, depreciation of productive materials")
+    @SeriesProperty(description = DOFA_DOOAGA_DOPM_ZH + " " + DOFA_DOOAGA_DOPM_EN)
     private double dofa_dooaga_dopm;
 
-    @SeriesProperty(description = "Amortization of intangible assets")
+    @SeriesProperty(description = A_OF_IA_ZH + " " + A_OF_IA_EN)
     private double a_of_ia;
 
-    @SeriesProperty(description = "Amortization of long-term unamortized expense")
+    @SeriesProperty(description = A_OF_LUE_ZH + " " + A_OF_LUE_EN)
     private double a_of_lue;
 
-    @SeriesProperty(description = "Decrease of unamortized expense")
+    @SeriesProperty(description = D_OF_UE_ZH + " " + D_OF_UE_EN)
     private double d_of_ue;
 
-    @SeriesProperty(description = "Increase in accrued expense")
+    @SeriesProperty(description = I_IN_AE_ZH + " " + I_IN_AE_EN)
     private double i_in_ae;
 
-    @SeriesProperty(description = "Loss on disposal of fixed assets, intangible assets and other long-term asset")
+    @SeriesProperty(description = LOD_OF_FA_IA_AND_OLA_ZH + " " + LOD_OF_FA_IA_AND_OLA_EN)
     private double lod_of_fa_ia_and_ola;
 
-    @SeriesProperty(description = "Loss on retirement of fixed asset")
+    @SeriesProperty(description = L_ON_ROFA_ZH + " " + L_ON_ROFA_EN)
     private double l_on_rofa;
 
-    @SeriesProperty(description = "Loss from changes in fair value")
+    @SeriesProperty(description = L_FROM_CIFY_ZH + " " + L_FROM_CIFY_EN)
     private double l_from_cifv;
 
-    @SeriesProperty(description = "Increase in deferred income (minus: decrease)")
+    @SeriesProperty(description = I_IN_DI_ZH + " " + I_IN_DI_EN)
     private double i_in_di;
 
-    @SeriesProperty(description = "Accrued liabilities")
+    @SeriesProperty(description = AL_ZH + " " + AL_EN)
     private double al;
 
-    @SeriesProperty(description = "Financial Expense")
+    @SeriesProperty(description = FE_ZH + " " + FE_EN)
     private double fe;
 
-    @SeriesProperty(description = "Investment loss")
+    @SeriesProperty(description = IL_ZH + " " + IL_EN)
     private double il;
 
-    @SeriesProperty(description = "Decrease of deferred income tax assets")
+    @SeriesProperty(description = D_OF_DITA_ZH + " " + D_OF_DITA_EN)
     private double d_of_dita;
 
-    @SeriesProperty(description = "Increase in deferred income tax liabilities")
+    @SeriesProperty(description = I_IN_DITL_ZH + " " + I_IN_DITL_EN)
     private double i_in_ditl;
 
-    @SeriesProperty(description = "Decrease in inventories")
+    @SeriesProperty(description = D_IN_I_ZH + " " + D_IN_I_EN)
     private double d_in_i;
 
-    @SeriesProperty(description = "Decrease of operating receivables")
+    @SeriesProperty(description = D_OF_OR_ZH + " " + D_OF_OR_EN)
     private double d_of_or;
 
-    @SeriesProperty(description = "Increase in operating payables")
+    @SeriesProperty(description = I_IN_OP_ZH + " " + I_IN_OP_EN)
     private double i_in_op;
 
-    @SeriesProperty(description = "Decrease of completed but unsettled funds (minus: increase)")
+    @SeriesProperty(description = D_OF_CBUF_ZH + " " + D_OF_CBUF_EN)
     private double d_of_cbuf;
 
-    @SeriesProperty(description = "Increase of settled but not completed payment  (minus: decrease)")
+    @SeriesProperty(description = I_OF_SBNCP_ZH + " " + I_OF_SBNCP_EN)
     private double i_of_sbncp;
 
-    @SeriesProperty(description = "Others")
+    @SeriesProperty(description = OTHERS_ZH + " " + OTHERS_EN)
     private double others;
 
-    @SeriesProperty(description = "Debt to capital")
+    @SeriesProperty(description = D_TO_C_ZH + " " + D_TO_C_EN)
     private double d_to_c;
 
-    @SeriesProperty(description = "Convertible bonds due within one year")
+    @SeriesProperty(description = CBD_WITHIN_OY_ZH + " " + CBD_WITHIN_OY_EN)
     private double cbd_within_oy;
 
-    @SeriesProperty(description = "Fixed assets under financing leas")
+    @SeriesProperty(description = FAUFL_ZH + " " + FAUFL_EN)
     private double faufl;
 
-    @SeriesProperty(description = "Closing balance of cash")
+    @SeriesProperty(description = CB_OF_C_ZH + " " + CB_OF_C_EN)
     private double cb_of_c;
 
-    @SeriesProperty(description = "Opening balance of cash")
+    @SeriesProperty(description = OB_OF_C_ZH + " " + OB_OF_C_EN)
     private double ob_of_c;
 
-    @SeriesProperty(description = "Closing balance of cash equivalents")
+    @SeriesProperty(description = CB_OF_CE_ZH + " " + CB_OF_CE_EN)
     private double cb_of_ce;
 
-    @SeriesProperty(description = "Opening balance of cash equivalents")
+    @SeriesProperty(description = OB_OF_CE_ZH + " " + OB_OF_CE_EN)
     private double ob_of_ce;
 
     @Override
