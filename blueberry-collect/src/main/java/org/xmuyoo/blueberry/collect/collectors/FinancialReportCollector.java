@@ -81,6 +81,7 @@ public class FinancialReportCollector extends BasicCollector {
                     .stream()
                     .filter(s -> !s.code().startsWith("5"))
                     .collect(Collectors.toList());
+            log.info("Start to collect financial reports for {} stocks", targetCodes.size());
             for (StockCode stockCode : targetCodes) {
                 TimeUnit.MICROSECONDS.sleep(100);
 
@@ -123,6 +124,7 @@ public class FinancialReportCollector extends BasicCollector {
                 });
             }
 
+            log.info("Complete collecting financial reports");
             return true;
         } catch (Exception e) {
             log.error("", e);
