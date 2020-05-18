@@ -193,7 +193,140 @@ public class FinancialReport extends Data {
     private static final String OB_OF_CE_ZH = "现金等价物的期初余额(万元)";
     private static final String OB_OF_CE_EN = "Opening balance of cash equivalents";
 
-    public static final Map<String, Pair<String, String>> INDICATOR_SCHEMA_NAME_MAPPING =
+    private static final String TOI_ZH = "营业总收入(万元)";
+    private static final String TOI_EN = "Total Operating Income";
+    private static final String REVENUE_ZH = "营业收入(万元)";
+    private static final String REVENUE_EN = "Revenue";
+    private static final String II_ZH = "利息收入(万元)";
+    private static final String II_EN = "Interest Income";
+    private static final String EP_ZH = "已赚保费(万元)";
+    private static final String EP_EN = "Earned premium";
+    private static final String F_AND_CI_ZH = "手续费及佣金收入(万元)";
+    private static final String F_AND_CI_EN = "Fees and commission income";
+    private static final String RESR_ZH = "房地产销售收入(万元)";
+    private static final String RESR_EN = "Real estate sales revenue";
+    private static final String OOI_ZH = "其他业务收入(万元)";
+    private static final String OOI_EN = "Other operating income";
+    private static final String TC_ZH = "营业总成本(万元)";
+    private static final String TC_EN = "Total cost";
+    private static final String C_OF_GS_ZH = "营业成本(万元)";
+    private static final String C_OF_GS_EN = "Cost of goods sold";
+    private static final String IE_ZH = "利息支出(万元)";
+    private static final String IE_EN = "Interest expense";
+    private static final String F_AND_CE_ZH = "手续费及佣金支出(万元)";
+    private static final String F_AND_CE_EN = "Fees and commission expense";
+    private static final String C_OF_RES_ZH = "房地产销售成本(万元)";
+    private static final String C_OF_RES_EN = "cost of real estate sold";
+    private static final String RESEARCH_EXPENSE_ZH = "研发费用(万元)";
+    private static final String RESEARCH_EXPENSE_EN = "Research expense";
+    private static final String SURRENDERS_ZH = "退保金(万元)";
+    private static final String SURRENDERS_EN = "Surrenders";
+    private static final String NCP_ZH = "赔付支出净额(万元)";
+    private static final String NCP_EN = "Net claims paid";
+    private static final String NR_ON_IC_ZH = "提取保险合同准备金净额(万元)";
+    private static final String NR_ON_IC_EN = "Net reserves on insurance contracts";
+    private static final String ED_ZH = "保单红利支出(万元)";
+    private static final String ED_EN = "Expenditure dividends";
+    private static final String REINSURANCE_EXPENSE_ZH = "分保费用(万元)";
+    private static final String REINSURANCE_EXPENSE_EN = "Reinsurance expenses";
+    private static final String OOC_ZH = "其他业务成本(万元)";
+    private static final String OOC_EN = "Other operating cost";
+    private static final String T_AND_S_ZH = "营业税金及附加(万元)";
+    private static final String T_AND_S_EN = "Taxes and surcharges";
+    private static final String SE_ZH = "销售费用(万元)";
+    private static final String SE_EN = "Sales expense";
+    private static final String AE_ZH = "管理费用(万元)";
+    private static final String AE_EN = "Administration expense";
+    private static final String I_FROM_CIFV_ZH = "公允价值变动收益(万元)";
+    private static final String I_FROM_CIFV_EN = "Income from changes in fair value";
+    private static final String I_FROM_I_ZH = "投资收益(万元)";
+    private static final String I_FROM_I_EN = "Income from investments";
+    private static final String I_FROM_IIA_AND_JV_ZH = "对联营企业和合营企业的投资收益(万元)";
+    private static final String I_FROM_IIA_AND_JV_EN = "Income from investment in associates and joint ventures";
+    private static final String EG_ZH = "汇兑收益(万元)";
+    private static final String EG_EN = "Exchange gains";
+    private static final String G_ON_F_ZH = "期货损益(万元)";
+    private static final String G_ON_F_EN = "Gains on futures";
+    private static final String DEPOSITS_ZH = "托管收益(万元)";
+    private static final String DEPOSITS_EN = "Deposits";
+    private static final String SI_ZH = "补贴收入(万元)";
+    private static final String SI_EN = "Subsidy income";
+    private static final String OOP_ZH = "其他业务利润(万元)";
+    private static final String OOP_EN = "Other operating profit";
+    private static final String OP_ZH = "营业利润(万元)";
+    private static final String OP_EN = "Operating profit";
+    private static final String NOI_ZH = "营业外收入(万元)";
+    private static final String NOI_EN = "Non operating income";
+    private static final String NOE_ZH = "营业外支出(万元)";
+    private static final String NOE_EN = "Non operating expense";
+    private static final String L_ON_DONCA_ZH = "非流动资产处置损失(万元)";
+    private static final String L_ON_DONCA_EN = "Loss on disposal of non current assets";
+    private static final String TOTAL_PROFIT_ZH = "利润总额(万元)";
+    private static final String TOTAL_PROFIT_EN = "Total profit";
+    private static final String IT_ZH = "所得税费用(万元)";
+    private static final String IT_EN = "Income tax";
+    private static final String NPA_TO_TOOTPC_ZH = "归属于母公司所有者的净利润(万元)";
+    private static final String NPA_TO_TOOTPC_EN = "Net profit attributable to the owner of the parent company";
+    private static final String NP_OF_TMPBTM_ZH = "被合并方在合并前实现净利润(万元)";
+    private static final String NP_OF_TMPBTM_EN = "Net profit of the merged party before the merger";
+    private static final String BEPS_ZH = "基本每股收益";
+    private static final String BEPS_EN = "Basic earnings per share";
+    private static final String DEPS_ZH = "稀释每股收益";
+    private static final String DEPS_EN = "Diluted earnings per share";
+    private static final String IMPAIRMENT_LOSS_ZH = "资产减值损失(万元)";
+    private static final String IMPAIRMENT_LOSS_EN = "Impairment Loss";
+
+    public static final Map<String, Pair<String, String>> PROFIT_INDICATORS_SCHEMA =
+            ImmutableMap.<String, Pair<String, String>>builder()
+                    .put(TOI_ZH, Pair.of("toi", TOI_EN))
+                    .put(REVENUE_ZH, Pair.of("revenue", REVENUE_EN))
+                    .put(II_ZH, Pair.of("ii", II_EN))
+                    .put(EP_ZH, Pair.of("ep", EP_EN))
+                    .put(F_AND_CI_ZH, Pair.of("f_and_ci", F_AND_CI_EN))
+                    .put(RESR_ZH, Pair.of("resr", RESR_EN))
+                    .put(OOI_ZH, Pair.of("ooi", OOI_EN))
+                    .put(TC_ZH, Pair.of("tc", TC_EN))
+                    .put(C_OF_GS_ZH, Pair.of("c_of_gs", C_OF_GS_EN))
+                    .put(IE_ZH, Pair.of("ie", IE_EN))
+                    .put(F_AND_CE_ZH, Pair.of("f_and_ce", F_AND_CE_EN))
+                    .put(C_OF_RES_ZH, Pair.of("c_of_res", C_OF_RES_EN))
+                    .put(RESEARCH_EXPENSE_ZH, Pair.of("research_expense", RESEARCH_EXPENSE_EN))
+                    .put(SURRENDERS_ZH, Pair.of("surrenders", SURRENDERS_EN))
+                    .put(NCP_ZH, Pair.of("ncp", NCP_EN))
+                    .put(NR_ON_IC_ZH, Pair.of("nr_on_ic", NR_ON_IC_EN))
+                    .put(ED_ZH, Pair.of("ed", ED_EN))
+                    .put(REINSURANCE_EXPENSE_ZH,
+                            Pair.of("reinsurance_expense", REINSURANCE_EXPENSE_EN))
+                    .put(OOC_ZH, Pair.of("ooc", OOC_EN))
+                    .put(T_AND_S_ZH, Pair.of("t_and_s", T_AND_S_EN))
+                    .put(SE_ZH, Pair.of("se", SE_EN))
+                    .put(AE_ZH, Pair.of("ae", AE_EN))
+                    .put(I_FROM_CIFV_ZH, Pair.of("i_from_cifv", I_FROM_CIFV_EN))
+                    .put(I_FROM_I_ZH, Pair.of("i_from_i", I_FROM_I_EN))
+                    .put(I_FROM_IIA_AND_JV_ZH, Pair.of("i_from_iia_and_jv", I_FROM_IIA_AND_JV_EN))
+                    .put(EG_ZH, Pair.of("eg", EG_EN))
+                    .put(G_ON_F_ZH, Pair.of("g_on_f_zh", G_ON_F_EN))
+                    .put(DEPOSITS_ZH, Pair.of("deposits", DEPOSITS_EN))
+                    .put(SI_ZH, Pair.of("si", SI_EN))
+                    .put(OOP_ZH, Pair.of("opp", OOP_EN))
+                    .put(OP_ZH, Pair.of("op", OP_EN))
+                    .put(NOI_ZH, Pair.of("noi", NOI_EN))
+                    .put(NOE_ZH, Pair.of("noe", NOE_EN))
+                    .put(L_ON_DONCA_ZH, Pair.of("l_on_donca", L_ON_DONCA_EN))
+                    .put(TOTAL_PROFIT_ZH, Pair.of("total_profit", TOTAL_PROFIT_EN))
+                    .put(IT_ZH, Pair.of("it", IT_EN))
+                    .put(NPA_TO_TOOTPC_ZH, Pair.of("npa_to_tootpc", NPA_TO_TOOTPC_EN))
+                    .put(NP_OF_TMPBTM_ZH, Pair.of("np_of_tmpbtm", NP_OF_TMPBTM_EN))
+                    .put(BEPS_ZH, Pair.of("bers", BEPS_EN))
+                    .put(DEPS_ZH, Pair.of("deps", DEPS_EN))
+                    .put(FE_ZH, Pair.of("fe", FE_EN))
+                    .put(NP_ZH, Pair.of("np", NP_EN))
+                    .put(MI_ZH, Pair.of("mi", MI_EN))
+                    .put("未确认投资损失(万元)", Pair.of("uil", UIL_EN))
+                    .put(IMPAIRMENT_LOSS_ZH, Pair.of("impairment_loss", IMPAIRMENT_LOSS_EN))
+                    .build();
+
+    public static final Map<String, Pair<String, String>> CASH_FLOW_INDICATORS_SCHEMA =
             ImmutableMap.<String, Pair<String, String>>builder()
                     .put("报告日期", Pair.of("datetime", "datetime"))
                     .put(CR_FROM_SG_PS_ZH, Pair.of("cr_from_sg_ps", CR_FROM_SG_PS_EN))
@@ -262,6 +395,7 @@ public class FinancialReport extends Data {
                     .put(NP_ZH, Pair.of("np", NP_EN))
                     .put(MI_ZH, Pair.of("mi", MI_EN))
                     .put(UIL_ZH, Pair.of("uil", UIL_EN))
+                    .put("未确认投资损失(万元)", Pair.of("uil", UIL_EN))
                     .put(P_FOR_IOA_ZH, Pair.of("p_for_ioa", P_FOR_IOA_EN))
                     .put(DOFA_DOOAGA_DOPM_ZH, Pair.of("dofa_dooaga_dopm", DOFA_DOOAGA_DOPM_EN))
                     .put(A_OF_IA_ZH, Pair.of("a_of_ia", A_OF_IA_EN))
@@ -593,6 +727,92 @@ public class FinancialReport extends Data {
 
     @SeriesProperty(description = OB_OF_CE_ZH + " " + OB_OF_CE_EN)
     private double ob_of_ce;
+
+    /**
+     * Profit Indicators
+     */
+    @SeriesProperty(description = TOI_ZH + " " + TOI_EN)
+    private double toi;
+    @SeriesProperty(description = REVENUE_ZH + " " + REVENUE_EN)
+    private double revenue;
+    @SeriesProperty(description = II_ZH + " " + II_EN)
+    private double ii;
+    @SeriesProperty(description = EP_ZH + " " + EP_EN)
+    private double ep;
+    @SeriesProperty(description = F_AND_CI_ZH + " " + F_AND_CI_EN)
+    private double f_and_ci;
+    @SeriesProperty(description = RESR_ZH + " " + RESR_EN)
+    private double resr;
+    @SeriesProperty(description = OOI_ZH + " " + OOI_EN)
+    private double ooi;
+    @SeriesProperty(description = TC_ZH + " " + TC_EN)
+    private double tc;
+    @SeriesProperty(description = C_OF_GS_ZH + " " + C_OF_GS_EN)
+    private double c_of_gs;
+    @SeriesProperty(description = IE_ZH + " " + IE_EN)
+    private double ie;
+    @SeriesProperty(description = F_AND_CE_ZH + " " + F_AND_CE_EN)
+    private double f_and_ce;
+    @SeriesProperty(description = C_OF_RES_ZH + " " + C_OF_RES_EN)
+    private double c_of_res;
+    @SeriesProperty(description = RESEARCH_EXPENSE_ZH + " " + RESEARCH_EXPENSE_EN)
+    private double research_expense;
+    @SeriesProperty(description = SURRENDERS_ZH + " " + SURRENDERS_EN)
+    private double surrenders;
+    @SeriesProperty(description = NCP_ZH + " " + NCP_EN)
+    private double ncp;
+    @SeriesProperty(description = NR_ON_IC_ZH + " " + NR_ON_IC_EN)
+    private double nr_on_ic;
+    @SeriesProperty(description = ED_ZH + " " + ED_EN)
+    private double ed;
+    @SeriesProperty(description = REINSURANCE_EXPENSE_ZH + " " + REINSURANCE_EXPENSE_EN)
+    private double reinsurance_expense;
+    @SeriesProperty(description = OOC_ZH + " " + OOC_EN)
+    private double ooc;
+    @SeriesProperty(description = T_AND_S_ZH + " " + T_AND_S_EN)
+    private double t_and_s;
+    @SeriesProperty(description = SE_ZH + " " + SE_EN)
+    private double se;
+    @SeriesProperty(description = AE_ZH + " " + AE_EN)
+    private double ae;
+    @SeriesProperty(description = I_FROM_CIFV_ZH + " " + I_FROM_CIFV_EN)
+    private double i_from_cifv;
+    @SeriesProperty(description = I_FROM_I_ZH + " " + I_FROM_I_EN)
+    private double i_from_i;
+    @SeriesProperty(description = I_FROM_IIA_AND_JV_ZH + " " + I_FROM_IIA_AND_JV_EN)
+    private double i_from_iia_and_jv;
+    @SeriesProperty(description = EG_ZH + " " + EG_EN)
+    private double eg;
+    @SeriesProperty(description = G_ON_F_ZH + " " + G_ON_F_EN)
+    private double g_on_f_zh;
+    @SeriesProperty(description = DEPOSITS_ZH + " " + DEPOSITS_EN)
+    private double deposits;
+    @SeriesProperty(description = SI_ZH + " " + SI_EN)
+    private double si;
+    @SeriesProperty(description = OOP_ZH + " " + OOP_EN)
+    private double opp;
+    @SeriesProperty(description = OP_ZH + " " + OP_EN)
+    private double op;
+    @SeriesProperty(description = NOI_ZH + " " + NOI_EN)
+    private double noi;
+    @SeriesProperty(description = NOE_ZH + " " + NOE_EN)
+    private double noe;
+    @SeriesProperty(description = L_ON_DONCA_ZH + " " + L_ON_DONCA_EN)
+    private double l_on_donca;
+    @SeriesProperty(description = TOTAL_PROFIT_ZH + " " + TOTAL_PROFIT_EN)
+    private double total_profit;
+    @SeriesProperty(description = IT_ZH + " " + IT_EN)
+    private double it;
+    @SeriesProperty(description = NPA_TO_TOOTPC_ZH + " " + NPA_TO_TOOTPC_EN)
+    private double npa_to_tootpc;
+    @SeriesProperty(description = NP_OF_TMPBTM_ZH + " " + NP_OF_TMPBTM_EN)
+    private double np_of_tmpbtm;
+    @SeriesProperty(description = BEPS_ZH + " " + BEPS_EN)
+    private double bers;
+    @SeriesProperty(description = DEPS_ZH + " " + DEPS_EN)
+    private double deps;
+    @SeriesProperty(description = IMPAIRMENT_LOSS_ZH + IMPAIRMENT_LOSS_EN)
+    private double impairment_loss;
 
     @Override
     protected Map<String, String> generateTags() {

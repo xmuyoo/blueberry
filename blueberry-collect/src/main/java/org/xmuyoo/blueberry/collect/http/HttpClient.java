@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 
 @Slf4j
 public class HttpClient implements Lifecycle {
@@ -32,7 +33,11 @@ public class HttpClient implements Lifecycle {
     private Disruptor<RequestWrapper> disruptor;
     private RingBuffer<RequestWrapper> requestsQueueBuffer;
 
+    private final OkHttpClient httpClient;
+
     public HttpClient() {
+        httpClient = new OkHttpClient();
+
         Config config = Configs.networkConfig();
         int cores = Runtime.getRuntime().availableProcessors();
         int clientThreads = config.hasPath(CLIENT_THREADS_RATIO) ?
@@ -41,7 +46,7 @@ public class HttpClient implements Lifecycle {
                 clientThreads <= 0 ? Runtime.getRuntime().availableProcessors() : clientThreads;
         RequestHandler[] requestHandlers = new RequestHandler[clientThreads];
         for (int i = 0; i < clientThreads; i++) {
-            requestHandlers[i] = new RequestHandler();
+            requestHandlers[i] = new RequestHandler(httpClient);
         }
 
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("http-client-%s").build();
@@ -73,10 +78,43 @@ public class HttpClient implements Lifecycle {
             wrapper.request(request);
             wrapper.responseHandler(handler);
         };
+
     }
 
     public void async(Request request, ResponseHandler handler) {
         requestsQueueBuffer.publishEvent(requestTranslator, request, handler);
+    }
+
+    public <R> R sync(Request req, Function<okhttp3.Response, R> responseRFunction) throws Exception {
+        okhttp3.Request.Builder builder = new okhttp3.Request.Builder();
+        builder.url(req.fullUrl());
+        req.headers().forEach(builder::header);
+
+        okhttp3.Request request;
+        switch (req.method()) {
+            case GET:
+                request = builder.build();
+                break;
+            case PUT:
+                builder.put(RequestBody.create(req.body()));
+                request = builder.build();
+            case POST:
+                builder.post(RequestBody.create(req.body()));
+                request = builder.build();
+                break;
+            default:
+                // do as GET
+                log.warn("No http method specified and use GET by default: {}", req.toString());
+                request = builder.build();
+                break;
+        }
+
+        okhttp3.Response response = httpClient.newCall(request).execute();
+
+        R r = responseRFunction.apply(response);
+        response.close();
+
+        return r;
     }
 
     @Override
@@ -104,8 +142,8 @@ public class HttpClient implements Lifecycle {
 
         private final OkHttpClient httpClient;
 
-        public RequestHandler() {
-            httpClient = new OkHttpClient();
+        private RequestHandler(OkHttpClient httpClient) {
+            this.httpClient = httpClient;
         }
 
         @Override

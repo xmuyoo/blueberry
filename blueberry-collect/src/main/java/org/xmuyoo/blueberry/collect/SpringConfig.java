@@ -27,7 +27,7 @@ public class SpringConfig {
         metaDataSource.setPassword(metaBaseConfig.getString("password"));
         metaDataSource.setInitialSize(2);
         metaDataSource.setMinIdle(2);
-        metaDataSource.setMaxActive(20);
+        metaDataSource.setMaxActive(10);
         metaDataSource.setMaxWait(10000);
 
         PgClient metaBase = new PgClient(metaDataSource);

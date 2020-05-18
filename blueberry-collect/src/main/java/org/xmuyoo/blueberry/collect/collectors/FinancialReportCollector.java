@@ -1,11 +1,15 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
+import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Response;
 import org.apache.commons.lang3.tuple.Pair;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.xmuyoo.blueberry.collect.TaskDefinition;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
@@ -17,6 +21,7 @@ import org.xmuyoo.blueberry.collect.http.Requests;
 import org.xmuyoo.blueberry.collect.storage.PersistentProperty;
 import org.xmuyoo.blueberry.collect.storage.ValueType;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -77,51 +82,70 @@ public class FinancialReportCollector extends BasicCollector {
             latestReports.forEach(
                     r -> latestReportsTime.put(r.stockCode(), r.recordTime().getTime()));
 
+            // Filter the ETF, LOF
             List<StockCode> targetCodes = stockCodeList
                     .stream()
                     .filter(s -> !s.code().startsWith("5"))
                     .collect(Collectors.toList());
             log.info("Start to collect financial reports for {} stocks", targetCodes.size());
             for (StockCode stockCode : targetCodes) {
-                TimeUnit.MICROSECONDS.sleep(100);
+                TimeUnit.SECONDS.sleep(1);
+                Long lastReportRecordTime =
+                        latestReportsTime.getOrDefault(stockCode.code(), 0L);
 
-                Request request = Requests.newFinancialReportRequest(stockCode.code());
-                httpClient.async(request, (req, response) -> {
-                    if (response.status() != HttpStatus.OK.value()) {
-                        log.warn("Failed to get financial report for {}, [{}]",
-                                req.fullUrl(), stockCode);
+                // Collect cash flow indicators
+                Request cashFlowRequest = Requests.newFinancialReportCashFlowRequest(
+                        stockCode.code());
+                Map<Long, Map<String, Double>> cashFlowIndicators =
+                        httpClient.sync(cashFlowRequest,
+                                (Function<Response, Map<Long, Map<String, Double>>>) response ->
+                                        parseResponse(
+                                                response,
+                                                cashFlowRequest,
+                                                stockCode,
+                                                FinancialReport.CASH_FLOW_INDICATORS_SCHEMA)
+                        );
+                Map<Long, Map<String, Double>> reportIndicators = new HashMap<>(cashFlowIndicators);
 
+                // Collect profit indicators
+                Request profitRequest = Requests.newFinancialReportRevenueRequest(
+                        stockCode.code());
+                Map<Long, Map<String, Double>> profitIndicators =
+                        httpClient.sync(profitRequest,
+                                (Function<Response, Map<Long, Map<String, Double>>>) response ->
+                                        parseResponse(response, profitRequest, stockCode,
+                                                FinancialReport.PROFIT_INDICATORS_SCHEMA)
+                        );
+                profitIndicators.forEach((time, indicators) -> {
+                    if (!reportIndicators.containsKey(time)) {
+                        reportIndicators.put(time, indicators);
                         return;
                     }
 
-                    Map<Long, Map<String, Double>> reportIndicators = parseReport(response.data());
-                    if (reportIndicators.isEmpty())
-                        return;
-
-                    Long lastReportRecordTime =
-                            latestReportsTime.getOrDefault(stockCode.code(), 0L);
-                    for (Map.Entry<Long, Map<String, Double>> entry : reportIndicators.entrySet()) {
-                        Long time = entry.getKey();
-                        if (time <= lastReportRecordTime)
-                            continue;
-
-                        Map<String, Double> indicators = entry.getValue();
-                        FinancialReport report = FinancialReport.of(
-                                LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ASIA_SHANGHAI),
-                                stockCode,
-                                indicators);
-
-                        List<SeriesData> seriesData;
-                        try {
-                            seriesData = report.toSeriesData();
-                        } catch (IllegalAccessException e) {
-                            log.error("Failed to transform financial report to series data list",
-                                    e);
-                            continue;
-                        }
-                        dataWarehouse.saveSeriesData(FINANCIAL_REPORT, seriesData);
-                    }
+                    reportIndicators.get(time).putAll(indicators);
                 });
+
+                for (Map.Entry<Long, Map<String, Double>> entry : reportIndicators.entrySet()) {
+                    Long time = entry.getKey();
+                    if (time <= lastReportRecordTime)
+                        continue;
+
+                    Map<String, Double> indicators = entry.getValue();
+                    FinancialReport report = FinancialReport.of(
+                            LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ASIA_SHANGHAI),
+                            stockCode,
+                            indicators);
+
+                    List<SeriesData> seriesData;
+                    try {
+                        seriesData = report.toSeriesData();
+                    } catch (IllegalAccessException e) {
+                        log.error("Failed to transform financial report to series data list",
+                                e);
+                        continue;
+                    }
+                    dataWarehouse.saveSeriesData(FINANCIAL_REPORT, seriesData);
+                }
             }
 
             log.info("Complete collecting financial reports");
@@ -150,7 +174,34 @@ public class FinancialReportCollector extends BasicCollector {
         return Arrays.asList(dateTime, value, metric, stockCode, stockName, description);
     }
 
-    private Map<Long, Map<String, Double>> parseReport(byte[] data) {
+    private Map<Long, Map<String, Double>> parseResponse(
+            Response response, Request request, StockCode stockCode,
+            Map<String, Pair<String, String>> indicatorMapping) {
+
+        if (null == response)
+            return new HashMap<>();
+
+        if (response.code() != HttpStatus.OK.value()) {
+            log.warn("Failed to get financial report for {}, [{}]", request.fullUrl(), stockCode);
+
+            return new HashMap<>();
+        }
+
+        Map<Long, Map<String, Double>> indicators = null;
+        try {
+            indicators = parseReport(response.body().bytes(), indicatorMapping);
+        } catch (IOException ex) {
+            log.error("Failed to get response body", ex);
+        }
+
+        if (null == indicators || indicators.isEmpty())
+            return new HashMap<>();
+
+        return indicators;
+    }
+
+    private Map<Long, Map<String, Double>> parseReport(byte[] data,
+                                                       Map<String, Pair<String, String>> indicatorMapping) {
         Map<Long, Map<String, Double>> parsedContent = new HashMap<>();
 
         String content;
@@ -164,7 +215,7 @@ public class FinancialReportCollector extends BasicCollector {
         }
 
         List<String> lines = LINE_SPLITTER.splitToList(content);
-        if (lines.size() < FinancialReport.INDICATOR_SCHEMA_NAME_MAPPING.size())
+        if (lines.size() < indicatorMapping.size())
             return parsedContent;
 
         String firstLine = lines.get(0).trim();
@@ -183,13 +234,12 @@ public class FinancialReportCollector extends BasicCollector {
         for (String line : lines.subList(1, lines.size())) {
             List<String> items = COMMA_SPLITTER.splitToList(line);
             String indicatorOption = items.get(0);
-            if (!FinancialReport.INDICATOR_SCHEMA_NAME_MAPPING.containsKey(indicatorOption)) {
+            if (!indicatorMapping.containsKey(indicatorOption)) {
                 log.warn("Unknown indicator option: {}", indicatorOption);
                 continue;
             }
 
-            Pair<String, String> indicatorInfo =
-                    FinancialReport.INDICATOR_SCHEMA_NAME_MAPPING.get(indicatorOption);
+            Pair<String, String> indicatorInfo = indicatorMapping.get(indicatorOption);
             // Loop datetime values
             for (int i = 1; i < items.size(); i++) {
                 Long datetime = datetimeIndexMapping.get(i);
