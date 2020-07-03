@@ -89,9 +89,11 @@ public abstract class BasicCollector implements Collector {
                 LocalDateTime now = LocalDateTime.now();
 
                 CollectRecord collectRecord = new CollectRecord();
-                collectRecord.id(Utils.MURMUR3.hashBytes(
-                        String.format("%s:%s", taskDefinition.id(), now.toString()).getBytes())
-                                              .toString());
+                String recordId = Utils.MURMUR3
+                        .hashBytes(String.format(
+                                "%s:%s", taskDefinition.id(), now.toString()).getBytes())
+                        .toString();
+                collectRecord.id(recordId);
                 collectRecord.status(success);
                 collectRecord.collectTaskId(taskDefinition.id());
                 collectRecord.collectedDatetime(now);

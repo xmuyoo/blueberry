@@ -23,7 +23,7 @@ public class CollectRecord {
     private LocalDateTime collectedDatetime;
 
     @JsonProperty
-    private boolean success;
+    private boolean status;
 
     @JsonProperty
     private Long collectTaskId;

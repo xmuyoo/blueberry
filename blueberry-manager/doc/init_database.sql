@@ -48,13 +48,6 @@ create table if not exists collect_task_data_schema (
 );
 create unique index tid_ds_id_idx on collect_task_data_schema(collect_task_id, data_schema_id);
 
--- StockCode collector
-create table if not exists stock_code (
-    code text not null primary key,
-    name text not null default '',
-    exchange text not null default ''
-);
-
 -- Create Views
 create or replace view "task_definition" as
     select t.id, t.description, t.source_name, t.source_url, t.source_type, t.time_ranges, t.period,
