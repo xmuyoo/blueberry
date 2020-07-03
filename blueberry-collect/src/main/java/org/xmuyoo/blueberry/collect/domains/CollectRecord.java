@@ -23,8 +23,8 @@ public class CollectRecord {
     @PersistentProperty(name = "collected_datetime", valueType = ValueType.Datetime)
     private LocalDateTime collectedDatetime;
 
-    @PersistentProperty(name = "success", valueType = ValueType.Boolean)
-    private boolean success;
+    @PersistentProperty(name = "status", valueType = ValueType.Boolean)
+    private boolean status;
 
     @PersistentProperty(name = "collect_task_id", valueType = ValueType.Text)
     private String collectTaskId;

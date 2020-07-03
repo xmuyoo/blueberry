@@ -92,7 +92,7 @@ public abstract class BasicCollector implements Collector {
                 collectRecord.id(Utils.MURMUR3.hashBytes(
                         String.format("%s:%s", taskDefinition.id(), now.toString()).getBytes())
                                               .toString());
-                collectRecord.success(success);
+                collectRecord.status(success);
                 collectRecord.collectTaskId(taskDefinition.id());
                 collectRecord.collectedDatetime(now);
 
