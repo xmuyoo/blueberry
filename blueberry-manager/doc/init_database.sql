@@ -65,7 +65,7 @@ create or replace view "task_definition" as
 ;
 
 create or replace view "task_results" as
-    select r.id as "record_id", r.collected_datetime, r.success as "result",
+    select r.id as "record_id", r.collected_datetime, r.status as "result",
             t.description as "task_description", t.id as "collect_task_id",
             t.source_name, t.source_url, t.source_type, t.time_ranges, t.period,
             t.body_pattern, t.http_method
