@@ -30,7 +30,7 @@ CREATE INDEX ON values_financial_report USING BRIN(record_time) WITH(autosummari
 SELECT create_hypertable(
   'values_financial_report',
   'record_time',
-  chunk_time_interval => INTERVAL '30 day',
+  chunk_time_interval => INTERVAL '180 day',
   create_default_indexes => false
 );
 
@@ -40,7 +40,6 @@ CREATE TABLE tags_financial_report(
   tags jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 CREATE UNIQUE INDEX ON tags_financial_report(tag_id, record_time);
-CREATE INDEX ON tags_financial_report USING BRIN (record_time) WITH (autosummarize = ON);
 CREATE INDEX ON tags_financial_report USING GIN(tags jsonb_ops);
 CREATE INDEX ON tags_financial_report (tag_stock_code(tags));
 CREATE INDEX ON tags_financial_report (tag_stock_name(tags));
@@ -55,9 +54,6 @@ CREATE VIEW financial_report AS
     tag_stock_name(tags) AS stock_name,
     t.tags->>'description' AS description,
     t.tags
-  FROM
-  (
-    SELECT DISTINCT tag_id, tags FROM tags_financial_report
-  ) AS t,
-  values_financial_report v
-  WHERE t.tag_id = v.tag_id;
+  FROM tags_financial_report t
+  JOIN values_financial_report v
+  ON t.tag_id = v.tag_id;

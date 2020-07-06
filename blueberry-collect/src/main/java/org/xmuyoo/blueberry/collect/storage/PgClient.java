@@ -30,6 +30,8 @@ public class PgClient implements Lifecycle {
             "INSERT INTO tags_%s (record_time, tag_id, tags) VALUES(?, ?, ?)"
                     + " ON CONFLICT (record_time, tag_id) DO NOTHING";
 
+    private static final Timestamp TAG_TIMESTAMP = new Timestamp(1593532800); // 2020.07.01 00:00:00
+
     private final DruidDataSource dataSource;
 
     public PgClient(DruidDataSource dataSource) {
@@ -114,8 +116,7 @@ public class PgClient implements Lifecycle {
                 valuesStmt.addBatch();
 
                 if (!tagIds.contains(seriesData.tagId())) {
-                    long dayInMilliseconds = Utils.toDayInMillis(seriesData.createdTime());
-                    tagsStmt.setTimestamp(1, new Timestamp(dayInMilliseconds));
+                    tagsStmt.setTimestamp(1, TAG_TIMESTAMP);
                     tagsStmt.setLong(2, seriesData.tagId());
                     String jsonTags = Utils.JSON.writeValueAsString(seriesData.tags());
                     PGobject jsonObject = new PGobject();
