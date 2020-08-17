@@ -75,15 +75,13 @@ public class TaskDefinition {
                 unit = TimeUnit.DAYS;
                 time = time * 7;
                 break;
-            case TIME_UNIT_DAY:
-                unit = TimeUnit.DAYS;
-                break;
             case TIME_UNIT_HOUR:
                 unit = TimeUnit.HOURS;
                 break;
             case TIME_UNIT_MINUTE:
                 unit = TimeUnit.MINUTES;
                 break;
+            case TIME_UNIT_DAY:
             default:
                 unit = TimeUnit.DAYS;
                 break;
