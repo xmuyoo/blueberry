@@ -40,7 +40,7 @@ A data schema defines a set of data fields, which are declared and registered by
 A data schema contains a `namespace` and some `fields`:
 
 - `namespace`: we can consider it as a data set name, fields under it should be stored isolated
-- `field`: a data unit with `name`, `type` and `descrption`, which can be a indicator value or a dimension
+- `field`: a data unit with `name`, `type` and `descrption`, which can be an indicator value or a dimension
 
 ### Collector
 
