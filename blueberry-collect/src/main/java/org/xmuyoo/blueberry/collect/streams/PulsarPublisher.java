@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class Publisher<T> implements Lifecycle {
+public class PulsarPublisher<T> implements Lifecycle {
 
     private static final String PULSAR_SERVICE = "services";
     private static final String SEND_TIMEOUT = "send.timeout";
@@ -24,24 +24,24 @@ public class Publisher<T> implements Lifecycle {
     private static final int DEFAULT_MAX_BATCHING_MESSAGES = 1000;
     private static final int DEFAULT_BATCHING_DELAY = 10;
 
-    private static Map<String, Publisher> publishers = new HashMap<>();
+    private static Map<String, PulsarPublisher> publishers = new HashMap<>();
 
-    public synchronized static <T> Publisher<T> getInstance(String topic, Class<T> clz) {
+    public synchronized static <T> PulsarPublisher<T> getInstance(String topic, Class<T> clz) {
         if (publishers.containsKey(topic)) {
             // noinspection unchecked
             return publishers.get(topic);
         }
 
-        Publisher<T> publisher = new Publisher<>(topic, clz);
-        publishers.put(topic, publisher);
+        PulsarPublisher<T> pulsarPublisher = new PulsarPublisher<>(topic, clz);
+        publishers.put(topic, pulsarPublisher);
 
-        return publisher;
+        return pulsarPublisher;
     }
 
     private PulsarClient client;
     private Producer<T> producer;
 
-    private Publisher(String topic, Class<T> clz) {
+    private PulsarPublisher(String topic, Class<T> clz) {
         Config pulsarConfig = Configs.publisherConfig();
         try {
             client = PulsarClient.builder()
@@ -60,8 +60,8 @@ public class Publisher<T> implements Lifecycle {
                     .batchingMaxPublishDelay(batchingDelay, TimeUnit.MILLISECONDS)
                     .create();
         } catch (PulsarClientException e) {
-            log.error("Failed to create Publisher client", e);
-            throw new RuntimeException("Failed to create Publisher client");
+            log.error("Failed to create PulsarPublisher client", e);
+            throw new RuntimeException("Failed to create PulsarPublisher client");
         }
     }
 
