@@ -25,7 +25,7 @@ public class PgClient implements Lifecycle {
             "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO NOTHING";
     private static final String INSERT_SERIES_DATA_VALUES_SQL_FMT =
             "INSERT INTO values_%s (record_time, value, tag_id) VALUES(?, ?, ?)"
-                    + " ON CONFLICT (record_time, tag_id) DO UPDATE SET value = excluded.value";
+                    + " ON CONFLICT (record_time, tag_id) DO NOTHING";
     private static final String INSERT_SERIES_DATA_TAGS_SQL_FMT =
             "INSERT INTO tags_%s (record_time, tag_id, tags) VALUES(?, ?, ?)"
                     + " ON CONFLICT (record_time, tag_id) DO NOTHING";
