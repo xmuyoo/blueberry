@@ -2,6 +2,7 @@ package org.xmuyoo.blueberry.collect.collectors;
 
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,20 +25,21 @@ import org.xmuyoo.blueberry.collect.storage.ValueType;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class FinancialReportCollector extends BasicCollector {
+
+    private static final String FINANCIAL_REPORT_CASH_FLOW_URL_FMT = "quotes.money.163.com/service/xjllb_%s.html";
+    private static final String FINANCIAL_REPORT_REVENUE_URL_FMT = "quotes.money.163.com/service/lrb_%s.html";
 
     private static final String FINANCIAL_REPORT = "financial_report";
     private static final Splitter LINE_SPLITTER = Splitter.on("\n")
@@ -67,64 +69,26 @@ public class FinancialReportCollector extends BasicCollector {
     @Override
     protected boolean collect() {
         try {
-            List<StockCode> stockCodeList = dataWarehouse.queryList(
-                    "SELECT code, name, exchange FROM stock_code",
-                    StockCode.class);
-            if (stockCodeList.isEmpty()) {
-                log.warn("StockCode list is empty. Skip collecting financial reports.");
-
+            List<StockCode> targetCodes = queryStockCodes();
+            if (targetCodes.isEmpty()) {
+                log.error("Target stock code list is empty");
                 return true;
             }
+            log.info("Start to collect financial reports for {} stocks", targetCodes.size());
 
             List<ReportRecord> latestReports =
                     dataWarehouse.queryList(LAST_RECORDS_SQL, ReportRecord.class);
+
             Map<String, Long> latestReportsTime = new HashMap<>();
             latestReports.forEach(
                     r -> latestReportsTime.put(r.stockCode(), r.recordTime().getTime()));
 
-            // Filter the ETF, LOF
-            List<StockCode> targetCodes = stockCodeList
-                    .stream()
-                    .filter(s -> !s.code().startsWith("5"))
-                    .collect(Collectors.toList());
-            log.info("Start to collect financial reports for {} stocks", targetCodes.size());
             for (StockCode stockCode : targetCodes) {
                 TimeUnit.SECONDS.sleep(1);
+
+                Map<Long, Map<String, Double>> reportIndicators = requestIndicators(stockCode);
                 Long lastReportRecordTime =
                         latestReportsTime.getOrDefault(stockCode.code(), 0L);
-
-                // Collect cash flow indicators
-                Request cashFlowRequest = Requests.newFinancialReportCashFlowRequest(
-                        stockCode.code());
-                Map<Long, Map<String, Double>> cashFlowIndicators =
-                        httpClient.sync(cashFlowRequest,
-                                (Function<Response, Map<Long, Map<String, Double>>>) response ->
-                                        parseResponse(
-                                                response,
-                                                cashFlowRequest,
-                                                stockCode,
-                                                FinancialReport.CASH_FLOW_INDICATORS_SCHEMA)
-                        );
-                Map<Long, Map<String, Double>> reportIndicators = new HashMap<>(cashFlowIndicators);
-
-                // Collect profit indicators
-                Request profitRequest = Requests.newFinancialReportRevenueRequest(
-                        stockCode.code());
-                Map<Long, Map<String, Double>> profitIndicators =
-                        httpClient.sync(profitRequest,
-                                (Function<Response, Map<Long, Map<String, Double>>>) response ->
-                                        parseResponse(response, profitRequest, stockCode,
-                                                FinancialReport.PROFIT_INDICATORS_SCHEMA)
-                        );
-                profitIndicators.forEach((time, indicators) -> {
-                    if (!reportIndicators.containsKey(time)) {
-                        reportIndicators.put(time, indicators);
-                        return;
-                    }
-
-                    reportIndicators.get(time).putAll(indicators);
-                });
-
                 for (Map.Entry<Long, Map<String, Double>> entry : reportIndicators.entrySet()) {
                     Long time = entry.getKey();
                     if (time <= lastReportRecordTime)
@@ -136,15 +100,13 @@ public class FinancialReportCollector extends BasicCollector {
                             stockCode,
                             indicators);
 
-                    List<SeriesData> seriesData;
                     try {
-                        seriesData = report.toSeriesData();
-                    } catch (IllegalAccessException e) {
+                        List<SeriesData> seriesData = report.toSeriesData();
+                        dataWarehouse.saveSeriesData(FINANCIAL_REPORT, seriesData);
+                    } catch (Exception e) {
                         log.error("Failed to transform financial report to series data list",
                                 e);
-                        continue;
                     }
-                    dataWarehouse.saveSeriesData(FINANCIAL_REPORT, seriesData);
                 }
             }
 
@@ -172,6 +134,65 @@ public class FinancialReportCollector extends BasicCollector {
                 "指标描述", taskId());
 
         return Arrays.asList(dateTime, value, metric, stockCode, stockName, description);
+    }
+
+    private Map<Long, Map<String, Double>> requestIndicators(StockCode stockCode) {
+        Map<Long, Map<String, Double>> reportIndicators = new HashMap<>();
+        try {
+            // Collect cash flow indicators
+            Request cashFlowRequest =
+                    Requests.newGetRequest(FINANCIAL_REPORT_CASH_FLOW_URL_FMT,
+                            ImmutableMap.of("code", stockCode.code()));
+            Map<Long, Map<String, Double>> cashFlowIndicators = httpClient.sync(
+                    cashFlowRequest,
+                    (Function<Response, Map<Long, Map<String, Double>>>) response ->
+                            parseResponse(response, cashFlowRequest, stockCode,
+                                    FinancialReport.CASH_FLOW_INDICATORS_SCHEMA));
+            reportIndicators.putAll(cashFlowIndicators);
+
+            // Collect profit indicators
+            Request profitRequest = Requests.newGetRequest(FINANCIAL_REPORT_REVENUE_URL_FMT,
+                    ImmutableMap.of("code", stockCode.code()));
+            Map<Long, Map<String, Double>> profitIndicators = httpClient.sync(
+                    profitRequest,
+                    (Function<Response, Map<Long, Map<String, Double>>>) response ->
+                            parseResponse(response, profitRequest, stockCode,
+                                    FinancialReport.PROFIT_INDICATORS_SCHEMA));
+            profitIndicators.forEach((time, indicators) -> {
+                if (!reportIndicators.containsKey(time)) {
+                    reportIndicators.put(time, indicators);
+                    return;
+                }
+
+                reportIndicators.get(time).putAll(indicators);
+            });
+        } catch (Exception e) {
+            log.error("Failed to request indicators for {}", stockCode, e);
+        }
+
+        return reportIndicators;
+    }
+
+    private List<StockCode> queryStockCodes() {
+        try {
+            List<StockCode> stockCodeList = dataWarehouse.queryList(
+                    "SELECT code, name, exchange FROM stock_code",
+                    StockCode.class);
+            if (stockCodeList.isEmpty()) {
+                log.warn("StockCode list is empty. Skip collecting financial reports.");
+
+                return Collections.emptyList();
+            }
+
+            // Filter the ETF, LOF
+            return stockCodeList
+                    .stream()
+                    .filter(s -> !s.code().startsWith("5"))
+                    .collect(Collectors.toList());
+        } catch (SQLException e) {
+            log.error("Failed to query stock code list", e);
+            return Collections.emptyList();
+        }
     }
 
     private Map<Long, Map<String, Double>> parseResponse(

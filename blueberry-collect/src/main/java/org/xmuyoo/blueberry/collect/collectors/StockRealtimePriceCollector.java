@@ -1,23 +1,25 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
-import org.xmuyoo.blueberry.collect.Configs;
 import org.xmuyoo.blueberry.collect.TaskDefinition;
-import org.xmuyoo.blueberry.collect.domains.*;
+import org.xmuyoo.blueberry.collect.domains.DataSchema;
+import org.xmuyoo.blueberry.collect.domains.SeriesData;
+import org.xmuyoo.blueberry.collect.domains.StockCode;
+import org.xmuyoo.blueberry.collect.domains.StockRealtimePrice;
 import org.xmuyoo.blueberry.collect.http.Request;
 import org.xmuyoo.blueberry.collect.http.Requests;
 import org.xmuyoo.blueberry.collect.storage.ValueType;
-import org.xmuyoo.blueberry.collect.utils.Utils;
 
 import java.sql.SQLException;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -36,7 +38,6 @@ public class StockRealtimePriceCollector extends BasicCollector {
     private ScheduledExecutorService executors;
     private List<StockCode> stockCodes;
     private List<Pair<LocalTime, LocalTime>> availableTimeRanges;
-//    private Publisher<SeriesData> publisher;
 
     public StockRealtimePriceCollector(TaskDefinition taskDefinition) {
         super(taskDefinition);
@@ -45,8 +46,6 @@ public class StockRealtimePriceCollector extends BasicCollector {
                 new ThreadFactoryBuilder().setNameFormat("stock-collector-%s").build();
         executors = Executors.newSingleThreadScheduledExecutor(factory);
         this.availableTimeRanges = taskDefinition().getTimeRangeList();
-
-//        publisher = Publisher.getInstance(config.getString(TOPIC), SeriesData.class);
     }
 
     @Override
@@ -80,7 +79,12 @@ public class StockRealtimePriceCollector extends BasicCollector {
     protected boolean collect() {
 
         for (StockCode stockCode : this.stockCodes) {
-            Request request = Requests.newStockCodeRequest(stockCode.code(), stockCode.exchange());
+            Map<String, String> params = ImmutableMap.of(
+                    "exchange", stockCode.exchange().toString().toLowerCase(),
+                    "code", stockCode.code()
+            );
+            Request request = Requests.newGetRequest(taskDefinition().sourceUrl(), params);
+
             httpClient.async(request, (req, response) -> {
                 if (response.status() != HttpStatus.OK.value()) {
                     log.warn("Can not request stock realtime price for {}",
@@ -118,10 +122,6 @@ public class StockRealtimePriceCollector extends BasicCollector {
                 }
 
                 dataWarehouse.saveSeriesData(STOCK_REALTIME_PRICE, seriesDataList);
-//                publisher.publish(seriesDataList, (msgId, e) -> {
-//                    if (null != e)
-//                        log.error("Failed to send stock realtime price", e);
-//                });
             });
         }
 

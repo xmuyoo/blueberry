@@ -1,40 +1,30 @@
 package org.xmuyoo.blueberry.collect.http;
 
-import com.google.common.collect.ImmutableMap;
 import org.springframework.http.HttpMethod;
-import org.xmuyoo.blueberry.collect.domains.StockCode;
+
+import java.util.Map;
 
 public class Requests {
 
-    private static final String STOCK_PRICE_HOST = "hq.sinajs.cn";
-    private static final String FINANCIAL_REPORT_CASH_FLOW_URL_FMT = "quotes.money.163.com/service/xjllb_%s.html";
-    private static final String FINANCIAL_REPORT_REVENUE_URL_FMT = "quotes.money.163.com/service/lrb_%s.html";
 
-    public static Request newStockCodeRequest(String code, StockCode.Exchange exchange) {
+    public static Request newGetRequest(String urlPattern, Map<String, String> params) {
         Request request = new Request();
         request.protocol(Request.HttpProtocol.V1_1);
-        request.host(STOCK_PRICE_HOST);
-        request.method(HttpMethod.GET);
-        request.parameters(ImmutableMap.of("list", exchange.toString() + code));
-
-        return request;
-    }
-
-    public static Request newFinancialReportCashFlowRequest(String stockCode) {
-        Request request = new Request();
-        request.protocol(Request.HttpProtocol.V1_1);
-        request.host(String.format(FINANCIAL_REPORT_CASH_FLOW_URL_FMT, stockCode));
+        request.host(formatUrl(urlPattern, params));
         request.method(HttpMethod.GET);
 
         return request;
     }
 
-    public static Request newFinancialReportRevenueRequest(String stockCode) {
-        Request request = new Request();
-        request.protocol(Request.HttpProtocol.V1_1);
-        request.host(String.format(FINANCIAL_REPORT_REVENUE_URL_FMT, stockCode));
-        request.method(HttpMethod.GET);
+    private static String formatUrl(String urlPattern, Map<String, String> parameters) {
+        String formattedUrl = urlPattern;
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
 
-        return request;
+            formattedUrl = formattedUrl.replaceAll(String.format("\\$\\{%s\\}", key), value);
+        }
+
+        return formattedUrl;
     }
 }
