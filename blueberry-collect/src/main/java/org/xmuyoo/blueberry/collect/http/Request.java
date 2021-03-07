@@ -1,7 +1,9 @@
 package org.xmuyoo.blueberry.collect.http;
 
 import com.google.common.base.Joiner;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.http.HttpMethod;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 @ToString
 @Getter
 @Setter
+@NoArgsConstructor
 public class Request {
 
     private static final Joiner QUERY_JOINER = Joiner.on("&");

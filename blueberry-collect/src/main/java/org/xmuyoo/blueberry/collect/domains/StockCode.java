@@ -31,6 +31,12 @@ public class StockCode {
     @PersistentProperty(name = "exchange", valueType = ValueType.Text)
     private Exchange exchange;
 
+    @PersistentProperty(name = "category", valueType = ValueType.Text)
+    private String category;
+
+    @PersistentProperty(name = "location", valueType = ValueType.Text)
+    private String location;
+
     public static Exchange getExchange(String typeName) {
         if (Exchange.SH.toString().equals(typeName.toLowerCase()))
             return Exchange.SH;

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import lombok.SneakyThrows;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -42,5 +43,15 @@ public class Utils {
 
     public static LocalTime toLocalTime(String timeStr) {
         return LocalTime.parse(timeStr, HOUR_TIME_FORMATTER);
+    }
+
+    @SneakyThrows
+    public static <T> byte[] serialize(T object) {
+        return Utils.JSON.writeValueAsString(object).getBytes();
+    }
+
+    @SneakyThrows
+    public static <T> T deserialize(byte[] data, Class<T> clz) {
+        return Utils.JSON.readValue(data, clz);
     }
 }

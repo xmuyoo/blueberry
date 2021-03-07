@@ -1,33 +1,25 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.xmuyoo.blueberry.collect.TaskDefinition;
+import org.xmuyoo.blueberry.collect.TShareData;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.domains.StockCode;
+import org.xmuyoo.blueberry.collect.http.HttpClient;
+import org.xmuyoo.blueberry.collect.storage.PgClient;
 import org.xmuyoo.blueberry.collect.storage.ValueType;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 public class StockCodeCollector extends BasicCollector {
 
-    private static final Pattern STOCK_HREF_PATTERN = Pattern.compile(".*/([a-z]+)([0-9]+).html");
-    private static final Pattern STOCK_NAME_PATTERN = Pattern.compile("(.*)\\([0-9]+\\)");
-    private static final int STANDARD_STOCK_CODE_LENGTH = 6;
+    private final TShareData tShareData;
 
-    private String stockCodeListUrl;
+    public StockCodeCollector(PgClient meta, HttpClient http) {
+        super("stock-code", meta);
 
-    public StockCodeCollector(TaskDefinition taskDefinition) {
-        super(taskDefinition);
-        this.stockCodeListUrl = taskDefinition.sourceUrl();
+        this.tShareData = new TShareData(http);
     }
 
     @Override
@@ -36,45 +28,10 @@ public class StockCodeCollector extends BasicCollector {
     }
 
     @Override
-    protected boolean collect() {
-        log.info("Collect stock codes of Chinese exchanges");
-
-        List<StockCode> stockCodes = new ArrayList<>();
-        try {
-            Document document = Jsoup.connect(stockCodeListUrl).get();
-            Elements elements = document.select("div[id=quotesearch]").select("a[target]");
-            for (Element element : elements) {
-                String href = element.attr("href");
-                String text = element.text();
-
-                StockCode stockCode = new StockCode();
-                Matcher matcher = STOCK_HREF_PATTERN.matcher(href);
-                if (!matcher.find()) {
-                    log.warn("Can not find stock code for {}", element.toString());
-                    continue;
-                }
-
-                StockCode.Exchange exchange = StockCode.getExchange(matcher.group(1));
-                String code = matcher.group(2);
-                stockCode.exchange(exchange);
-                if (code.length() > STANDARD_STOCK_CODE_LENGTH)
-                    code = code.substring(1);
-                stockCode.code(code);
-
-                Matcher nameMatcher = STOCK_NAME_PATTERN.matcher(text);
-                if (!nameMatcher.find())
-                    stockCode.name(text);
-                else
-                    stockCode.name(nameMatcher.group(1));
-
-                stockCodes.add(stockCode);
-            }
-
-            dataWarehouse.saveIgnoreDuplicated(stockCodes, StockCode.class);
-        } catch (Exception e) {
-            log.error("Failed to load stock codes", e);
-            return false;
-        }
+    public boolean collect() {
+        List<StockCode> codeList = tShareData.stockCodeList();
+        codeList.forEach(c -> System.out.println(c.toString()));
+        this.storage.saveIgnoreDuplicated(codeList, StockCode.class);
 
         return true;
     }
@@ -83,13 +40,13 @@ public class StockCodeCollector extends BasicCollector {
     protected List<DataSchema> getDataSchemaList() {
         DataSchema stockCode =
                 new DataSchema("stock_code", "code", ValueType.Text,
-                               "中国上交所和深交所股票代码", this.taskId());
+                        "中国上交所和深交所股票代码", this.collectorName);
         DataSchema stockName =
                 new DataSchema("stock_code", "name", ValueType.Text,
-                               "中国上交所和深交所股票名称", this.taskId());
+                        "中国上交所和深交所股票名称", this.collectorName);
         DataSchema stockExchange =
                 new DataSchema("stock_code", "exchange", ValueType.Text,
-                               "中国股票所属交易所", this.taskId());
+                        "中国股票所属交易所", this.collectorName);
         return Arrays.asList(stockCode, stockName, stockExchange);
     }
 }
