@@ -4,6 +4,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.xmuyoo.blueberry.collect.collectors.StockCodeCollector;
+import org.xmuyoo.blueberry.collect.collectors.StockSnapshotCollector;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
@@ -27,7 +28,12 @@ public class DataJobsRunner {
 
         PgClient storage = new PgClient(metaDataSource);
 
-        StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
-        stockCodeCollector.collect();
+        // Stock code list
+//        StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
+//        stockCodeCollector.run();
+
+        // Stock snapshot
+        StockSnapshotCollector stockSnapshotCollector = new StockSnapshotCollector(storage, httpClient);
+        stockSnapshotCollector.run();
     }
 }

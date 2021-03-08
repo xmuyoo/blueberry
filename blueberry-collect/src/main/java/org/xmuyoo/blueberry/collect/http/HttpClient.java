@@ -11,12 +11,15 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.xmuyoo.blueberry.collect.Configs;
 import org.xmuyoo.blueberry.collect.Lifecycle;
 import org.xmuyoo.blueberry.collect.ResponseHandler;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -87,7 +90,11 @@ public class HttpClient implements Lifecycle {
 
     public <R> R sync(Request req, Function<okhttp3.Response, R> responseRFunction) throws Exception {
         okhttp3.Request.Builder builder = new okhttp3.Request.Builder();
-        builder.url(req.fullUrl());
+        if (StringUtils.isBlank(req.url()))
+            builder.url(req.fullUrl());
+        else
+            builder.url(req.url());
+
         req.headers().forEach(builder::header);
 
         okhttp3.Request request;

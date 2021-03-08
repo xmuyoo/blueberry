@@ -1,7 +1,6 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.xmuyoo.blueberry.collect.TShareData;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.domains.StockCode;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
@@ -28,7 +27,7 @@ public class StockCodeCollector extends BasicCollector {
     }
 
     @Override
-    public boolean collect() {
+    protected boolean collect() {
         List<StockCode> codeList = tShareData.stockCodeList();
         codeList.forEach(c -> System.out.println(c.toString()));
         this.storage.saveIgnoreDuplicated(codeList, StockCode.class);

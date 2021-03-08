@@ -51,6 +51,7 @@ public abstract class BasicCollector implements Collector {
 
     @Override
     public void run() {
+        log.info("Running {} collector", this.collectorName);
         registerDataSchema();
         start();
 
@@ -64,6 +65,7 @@ public abstract class BasicCollector implements Collector {
         }
 
         shutdown();
+        log.info("Collecting completed. Shutdown {}", this.collectorName);
     }
 
     protected abstract boolean isAvailable();
@@ -86,11 +88,7 @@ public abstract class BasicCollector implements Collector {
     private void registerDataSchema() {
         List<DataSchema> dataSchemaList = getDataSchemaList();
         try {
-//            storage.saveIgnoreDuplicated(dataSchemaList, DataSchema.class);
-//            for (DataSchema dataSchema : dataSchemaList) {
-//                String sql = String.format(DATA_SCHEMA_MAPPING_SQL_FORMAT, collectorName, dataSchema.id());
-//                storage.execute(sql);
-//            }
+            storage.saveIgnoreDuplicated(dataSchemaList, DataSchema.class);
         } catch (Exception e) {
             log.error(String.format("Failed to register data schema for collector [%s:%s]",
                     name(), collectorName), e);

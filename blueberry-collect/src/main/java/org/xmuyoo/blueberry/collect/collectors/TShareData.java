@@ -1,4 +1,4 @@
-package org.xmuyoo.blueberry.collect;
+package org.xmuyoo.blueberry.collect.collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

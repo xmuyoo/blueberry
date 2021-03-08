@@ -38,6 +38,7 @@ public class Request {
     }
 
     private HttpProtocol protocol = HttpProtocol.V1_1;
+    private String url;
     private String host;
     private int port;
     private HttpMethod method = HttpMethod.GET;
