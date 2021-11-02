@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -24,13 +25,13 @@ import org.xmuyoo.blueberry.collect.utils.Utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @Slf4j
 public class StockSnapshotCollector extends BasicCollector {
 
     private static final String STOCK_SNAPSHOT = "stock_snapshot";
+    private static final String COOKIE_STRING = "Hm_lvt_1db88642e346389874251b5a1eded6e3=1634136017,1635863052; device_id=94aee6be8ada348a95176a08545f9fea; s=c212bco9yi; xq_a_token=84594e5ed31d2073c04e20e6d5f6025ca3c9412e; xqat=84594e5ed31d2073c04e20e6d5f6025ca3c9412e; xq_r_token=7db1253145a2bfc99a82e274223cf9c06d8e9097; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjEwMzkyMzQ0NTMsImlzcyI6InVjIiwiZXhwIjoxNjM4NDU1MDc1LCJjdG0iOjE2MzU4NjMwNzUzNjgsImNpZCI6ImQ5ZDBuNEFadXAifQ.WSdP1AufwTqD8I_lRJc4EABADJpdUHqfFxJ58YZYkXDcwTH_LZm_Oa2NR7yV4sySPOCKksH32u7Prnwbc7Th8gDKWxC5nYLWs3QVN1jNys61D1WROVAGhEqYm-jaDNrn1iprDHl0P3LNkEMA2gG2h1o75PmBJngKehU1-lZXGblr4vdLoCWaF0m2FrgvrXG5f_Wx4C-BugnBOGfVjDDH6R9xvq502RKKIEfSNxR58LQI3QeLVlHyymnRXSK4GJdUQmky5Oz8jN0z4WgADXPcXwlDeSm1wR_VAiSMgm2TTsM7keKSrsfTlRQFbR4jOpMgIHaQT-YFBpL67c7A8Ss9Fg; xq_is_login=1; u=1039234453; is_overseas=0; Hm_lpvt_1db88642e346389874251b5a1eded6e3=1635863077";
 
     private final HttpClient http;
     private final String xqUrlFmt;
@@ -55,51 +56,63 @@ public class StockSnapshotCollector extends BasicCollector {
                 this.storage.queryList("SELECT code, name, exchange FROM stock_code", StockCode.class);
 
         List<StockSnapshot> stockSnapshotList = new ArrayList<>();
+        int idx = 1;
         for (StockCode stockCode : stockCodeList) {
-            log.info("StockSnapshot: {}", stockCode.name());
+            log.info("StockSnapshot at {}: {}", idx, stockCode.name());
             String identifier = stockCode.exchange().name() + stockCode.code();
             String url = String.format(this.xqUrlFmt, identifier);
 
             Request request = new Request();
             request.url(url);
             request.method(HttpMethod.GET);
-            request.headers(ImmutableMap.of("Cookie", "device_id=24700f9f1986800ab4fcc880530dd0ed; s=d71une92u2; xq_a_token=caa685f305e8e80732095691828b5946340658ce; xqat=caa685f305e8e80732095691828b5946340658ce; xq_r_token=97209c89d3e8807516f4b39dd29652b843e88043; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjEwMzkyMzQ0NTMsImlzcyI6InVjIiwiZXhwIjoxNjE2ODk1NTI2LCJjdG0iOjE2MTQzMDM1MjY2NTgsImNpZCI6ImQ5ZDBuNEFadXAifQ.X5bkhiC4FirlDbw5wVBazd5Sf83N98P01DgtQUFFWIr-IAfMVNgCwvpi2ywiRxW4z8mgx7RlS1pmufimnnLRfy_kvSunVW8lf-BccogokfvpukX_XExbxIlxlByHB1Zv3KjdFbIa7AoM0Y8Dynm9YOy-fXTwarBnOyQhM2Rbt_LaHcRsFP9ouqVPrQYvcRxgDoDBgVBpSjpJ9upDox0PpmqXcWrJbSfLv1WFFYonZ6Fes8TTrLfmuZb_tujETdRj8NTcGaAaxvrENJQNDChTKcRsNqx39ftvhYGM4GHz0JoCbkMnBjqaYiklNNI60bMegwHvZ_suJ9gLEt1iZu9xQQ; xq_is_login=1; u=1039234453; snbim_minify=true; bid=73e383c861a64ba9668b2c3a7057510e_kllow2np; Hm_lvt_1db88642e346389874251b5a1eded6e3=1612923488,1614303504; Hm_lpvt_1db88642e346389874251b5a1eded6e3=1615085659"));
+            request.headers(ImmutableMap.of("Cookie", COOKIE_STRING));
 
             StockSnapshot stockSnapshot = http.sync(request, new Function<Response, StockSnapshot>() {
-
-                @SneakyThrows
                 @Override
                 public StockSnapshot apply(Response response) {
-                    XqStockSnapshotResponse resp =
-                            Utils.deserialize(response.body().bytes(), XqStockSnapshotResponse.class);
+                    try {
+                        XqStockSnapshotResponse resp =
+                                Utils.deserialize(response.body().bytes(), XqStockSnapshotResponse.class);
 
-                    Data data = resp.data();
-                    Double peLyr = data.getValue(StockSnapshot.PE_LYR, Double.class, 0.0);
-                    Double pb = data.getValue(StockSnapshot.PB, Double.class, 0.0);
-                    Double dividendYield = data.getValue(StockSnapshot.DIVIDEND_YIELD, Double.class, 0.0);
-                    Double marketCapital = data.getValue(StockSnapshot.MARKET_CAPITAL, Double.class, 0.0);
-                    Number totalShares = data.getValue(StockSnapshot.TOTAL_SHARES, Number.class, 0L);
-                    Double lastClose = data.getValue(StockSnapshot.LAST_CLOSE, Double.class, 0.0);
-                    Double navps = data.getValue(StockSnapshot.NAVPS, Double.class, 0.0);
+                        Data data = resp.data();
+                        Double peLyr = data.getValue(StockSnapshot.PE_LYR, Double.class, 0.0);
+                        Double pb = data.getValue(StockSnapshot.PB, Double.class, 0.0);
+                        Double dividendYield = data.getValue(StockSnapshot.DIVIDEND_YIELD, Double.class, 0.0);
+                        Double marketCapital = data.getValue(StockSnapshot.MARKET_CAPITAL, Double.class, 0.0);
+                        Number totalShares = data.getValue(StockSnapshot.TOTAL_SHARES, Number.class, 0L);
+                        Double lastClose = data.getValue(StockSnapshot.LAST_CLOSE, Double.class, 0.0);
+                        Double navps = data.getValue(StockSnapshot.NAVPS, Double.class, 0.0);
 
-                    StockSnapshot snapshot = new StockSnapshot();
-                    snapshot.code(stockCode.code());
-                    snapshot.name(stockCode.name());
-                    snapshot.peLyr(peLyr);
-                    snapshot.pb(pb);
-                    snapshot.totalShares(totalShares);
-                    snapshot.marketCapital(marketCapital);
-                    snapshot.dividendYield(dividendYield);
-                    snapshot.lastClose(lastClose);
-                    snapshot.navps(navps);
+                        StockSnapshot snapshot = new StockSnapshot();
+                        snapshot.code(stockCode.code());
+                        snapshot.name(stockCode.name());
+                        snapshot.peLyr(peLyr);
+                        snapshot.pb(pb);
+                        snapshot.totalShares(totalShares);
+                        snapshot.marketCapital(marketCapital);
+                        snapshot.dividendYield(dividendYield);
+                        snapshot.lastClose(lastClose);
+                        snapshot.navps(navps);
 
-                    return snapshot;
+                        return snapshot;
+                    } catch (Exception e) {
+                        log.warn("Failed to parse response data for {}: ", stockCode, e);
+                        return null;
+                    }
                 }
             });
 
-            stockSnapshotList.add(stockSnapshot);
+            if (null != stockSnapshot) {
+                stockSnapshotList.add(stockSnapshot);
+            }
+            TimeUnit.MILLISECONDS.sleep(10);
 
-//            TimeUnit.SECONDS.sleep(1);
+            if (idx % 100 == 0) {
+                this.storage.saveIgnoreDuplicated(stockSnapshotList, StockSnapshot.class);
+                stockSnapshotList.clear();
+            }
+
+            idx++;
         }
 
         this.storage.saveIgnoreDuplicated(stockSnapshotList, StockSnapshot.class);
@@ -145,9 +158,14 @@ public class StockSnapshotCollector extends BasicCollector {
         private Map<String, Object> quote;
 
         public <T> T getValue(String key, Class<T> clz, T defaultValue) {
+            if (null == this.quote) {
+                return null;
+            }
+
             Object val = this.quote.get(key);
-            if (null == val)
+            if (null == val) {
                 return defaultValue;
+            }
 
             return clz.cast(val);
         }

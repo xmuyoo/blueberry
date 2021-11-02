@@ -14,7 +14,7 @@ import org.xmuyoo.blueberry.collect.storage.ValueType;
 public class StockCode {
 
     public enum Exchange {
-        SH, SZ;
+        SH, SZ, BJ;
 
         @Override
         public String toString() {
@@ -36,13 +36,4 @@ public class StockCode {
 
     @PersistentProperty(name = "location", valueType = ValueType.Text)
     private String location;
-
-    public static Exchange getExchange(String typeName) {
-        if (Exchange.SH.toString().equals(typeName.toLowerCase()))
-            return Exchange.SH;
-        else if (Exchange.SZ.toString().equals(typeName.toLowerCase()))
-            return Exchange.SZ;
-        else
-            return null;
-    }
 }

@@ -9,7 +9,7 @@ import org.xmuyoo.blueberry.collect.http.HttpClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
-public class DataJobsRunner {
+public class ManualRunner {
 
     public static void main(String[] args) throws Exception {
         // Prepare components
@@ -29,8 +29,8 @@ public class DataJobsRunner {
         PgClient storage = new PgClient(metaDataSource);
 
         // Stock code list
-//        StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
-//        stockCodeCollector.run();
+        StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
+        stockCodeCollector.run();
 
         // Stock snapshot
         StockSnapshotCollector stockSnapshotCollector = new StockSnapshotCollector(storage, httpClient);

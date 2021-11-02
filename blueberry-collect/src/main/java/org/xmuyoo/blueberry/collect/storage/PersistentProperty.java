@@ -9,9 +9,18 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 public @interface PersistentProperty {
 
+    /**
+     * Column name in the table.
+     */
     String name();
 
+    /**
+     * Column type:
+     */
     ValueType valueType();
 
+    /**
+     * Whether the column is unique or not.
+     */
     boolean isUnique() default false;
 }
