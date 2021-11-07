@@ -14,17 +14,29 @@ public class Configs {
     private static final String PUBLISHER_CONFIG = "pulsar";
     private static final String META_BASE_CONFIG = "metaBase";
     private static final String DATA_WAREHOUSE_CONFIG = "dataWarehouse";
+    private static final String TASKS_SWITCH = "tasks.switch";
 
     private static final Config applicationConfig = ConfigFactory.load("application");
 
     @Setter(AccessLevel.PRIVATE)
     private Config jobConfig;
 
+    @Setter(AccessLevel.PRIVATE)
+    private Config tasksSwitchConfig;
+
     public static Configs of(Config config) {
         Configs configs = new Configs();
-        configs.jobConfig(config);
+        configs.tasksSwitchConfig(applicationConfig.getConfig("tasks.switch"));
 
         return configs;
+    }
+
+    public static Config of(String configName) {
+        return ConfigFactory.load(configName);
+    }
+
+    public static Configs applicationConfig() {
+        return of(applicationConfig);
     }
 
     public String getString(String key, String defaultValue) {
@@ -52,5 +64,17 @@ public class Configs {
     public static Config dataWarehouseConfig() {
         return applicationConfig.hasPath(DATA_WAREHOUSE_CONFIG) ? applicationConfig.getConfig(DATA_WAREHOUSE_CONFIG) :
                 ConfigFactory.empty();
+    }
+
+    public boolean runStockCodeList() {
+        return this.tasksSwitchConfig.getBoolean("stock.code.list");
+    }
+
+    public boolean runStockSnapshot() {
+        return this.tasksSwitchConfig.getBoolean("stock.snapshot");
+    }
+
+    public boolean runConvertBondCodeList() {
+        return this.tasksSwitchConfig.getBoolean("convert.bond.code.list");
     }
 }

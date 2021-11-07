@@ -23,4 +23,6 @@ public @interface PersistentProperty {
      * Whether the column is unique or not.
      */
     boolean isUnique() default false;
+
+    String description() default "";
 }

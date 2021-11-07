@@ -3,6 +3,7 @@ package org.xmuyoo.blueberry.collect;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.xmuyoo.blueberry.collect.collectors.ConvertibleBondCodeCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockCodeCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockSnapshotCollector;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
@@ -28,12 +29,24 @@ public class ManualRunner {
 
         PgClient storage = new PgClient(metaDataSource);
 
+        Configs appConfigs = Configs.applicationConfig();
         // Stock code list
-        StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
-        stockCodeCollector.run();
-
+        if (appConfigs.runStockCodeList()) {
+            StockCodeCollector stockCodeCollector = new StockCodeCollector(storage, httpClient);
+            stockCodeCollector.run();
+        }
         // Stock snapshot
-        StockSnapshotCollector stockSnapshotCollector = new StockSnapshotCollector(storage, httpClient);
-        stockSnapshotCollector.run();
+        if (appConfigs.runStockSnapshot()) {
+            StockSnapshotCollector stockSnapshotCollector = new StockSnapshotCollector(storage, httpClient);
+            stockSnapshotCollector.run();
+        }
+        // Convertible bond code list
+        if (appConfigs.runConvertBondCodeList()) {
+            ConvertibleBondCodeCollector convertibleBondCodeCollector =
+                    new ConvertibleBondCodeCollector(storage, httpClient);
+            convertibleBondCodeCollector.run();
+        }
+
+        storage.shutdown();
     }
 }

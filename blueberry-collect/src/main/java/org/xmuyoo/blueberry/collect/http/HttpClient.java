@@ -1,5 +1,6 @@
 package org.xmuyoo.blueberry.collect.http;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -25,12 +26,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
+import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Slf4j
 public class HttpClient implements Lifecycle {
 
     private static final String CLIENT_THREADS_RATIO = "client.threads.ratio";
     private static final int RING_BUFFER_SIZE = 4096;
+    private static final TypeReference<byte[]> TYPE_BYTES = new TypeReference<>() {
+    };
 
     private final EventTranslatorTwoArg<RequestWrapper, Request, ResponseHandler> requestTranslator;
     private Disruptor<RequestWrapper> disruptor;
@@ -84,8 +88,49 @@ public class HttpClient implements Lifecycle {
 
     }
 
+    public static byte[] getResponseData(okhttp3.Response response) {
+        try {
+            if (response.isSuccessful()) {
+                return response.body().bytes();
+            } else {
+                log.error("Failed to get response data. Code: {}", response.code());
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Failed to get response data", e);
+            return null;
+        }
+    }
+
+    public static <T> T getResponseData(okhttp3.Response response, Class<T> clz) {
+        byte[] data = getResponseData(response);
+        if (null == data) {
+            return null;
+        } else {
+            return Utils.deserialize(data, clz);
+        }
+    }
+
+    public static <T> T getResponseData(okhttp3.Response response, TypeReference<T> type) {
+        byte[] data = getResponseData(response);
+        if (null == data) {
+            return null;
+        } else {
+            return Utils.deserialize(data, type);
+        }
+    }
+
     public void async(Request request, ResponseHandler handler) {
         requestsQueueBuffer.publishEvent(requestTranslator, request, handler);
+    }
+
+    public <I, O> O sync(Request req, Function<I, O> applier, Class<I> clz) throws Exception {
+        I data = sync(req, resp -> getResponseData(resp, clz));
+        if (null == data) {
+            return null;
+        }
+
+        return applier.apply(data);
     }
 
     public <R> R sync(Request req, Function<okhttp3.Response, R> responseRFunction) throws Exception {

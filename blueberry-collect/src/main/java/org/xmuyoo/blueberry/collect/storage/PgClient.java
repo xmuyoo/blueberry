@@ -45,8 +45,9 @@ public class PgClient implements Lifecycle {
 
     @Override
     public void shutdown() {
-        if (null != dataSource)
+        if (null != dataSource) {
             dataSource.close();
+        }
     }
 
     public <T> boolean saveIgnoreDuplicated(@NonNull List<T> dataList, Class<T> clz) {
@@ -70,18 +71,20 @@ public class PgClient implements Lifecycle {
         List<String> filedNames = new ArrayList<>();
         for (Field field : fields) {
             PersistentProperty property = field.getAnnotation(PersistentProperty.class);
-            if (null == property)
+            if (null == property) {
                 continue;
+            }
 
             propertyList.add(property);
             propertyNames.add(property.name());
             filedNames.add(field.getName());
-            if (property.isUnique())
+            if (property.isUnique()) {
                 uniqueProperties.add(property.name());
+            }
         }
         if (propertyNames.isEmpty()) {
             log.warn("There is no persistent properties specified in {} and ignore the saves",
-                     clz.getSimpleName());
+                    clz.getSimpleName());
             return false;
         }
 
@@ -90,11 +93,11 @@ public class PgClient implements Lifecycle {
         String insertSql;
         if (uniqueProperties.isEmpty()) {
             insertSql = String.format(INSERT_IGNORE_DATA_FORMAT,
-                                      tableName, Utils.commaJoin(propertyNames), placeholders);
+                    tableName, Utils.commaJoin(propertyNames), placeholders);
         } else {
             insertSql = String.format(INSERT_SPECIFIED_UNIQUE_DATA_FORMAT,
-                                      tableName, Utils.commaJoin(propertyNames), placeholders,
-                                      Utils.commaJoin(uniqueProperties));
+                    tableName, Utils.commaJoin(propertyNames), placeholders,
+                    Utils.commaJoin(uniqueProperties));
         }
 
         return saveData(dataList, filedNames, propertyList, insertSql);
@@ -149,18 +152,20 @@ public class PgClient implements Lifecycle {
 
     public <R> R queryOne(String sql) throws SQLException {
         List<R> results = execAndGetList(sql, null, null);
-        if (!results.isEmpty())
+        if (!results.isEmpty()) {
             return results.get(0);
-        else
+        } else {
             return null;
+        }
     }
 
     public <R> R queryOne(String sql, Class<R> clz) throws SQLException {
         List<R> results = execAndGetList(sql, clz, null);
-        if (!results.isEmpty())
+        if (!results.isEmpty()) {
             return results.get(0);
-        else
+        } else {
             return null;
+        }
     }
 
     public void execute(String sql) throws SQLException {
@@ -179,19 +184,28 @@ public class PgClient implements Lifecycle {
                     field.setAccessible(true);
                     PersistentProperty property = properties.get(i);
 
+                    Object fieldData = field.get(data);
                     switch (property.valueType()) {
                         case Json:
-                            PGobject pGobject = new PGobject();
-                            pGobject.setType("json");
-                            pGobject.setValue(Utils.JSON.writeValueAsString(field.get(data)));
+                            if (null != fieldData) {
+                                PGobject pGobject = new PGobject();
+                                pGobject.setType("json");
+                                pGobject.setValue(Utils.JSON.writeValueAsString(fieldData));
 
-                            stmt.setObject(i + 1, pGobject);
+                                stmt.setObject(i + 1, pGobject);
+                            } else {
+                                stmt.setObject(i + 1, null);
+                            }
                             break;
                         case Text:
-                            stmt.setObject(i + 1, field.get(data).toString());
+                            if (null != fieldData) {
+                                stmt.setObject(i + 1, fieldData.toString());
+                            } else {
+                                stmt.setObject(i + 1, null);
+                            }
                             break;
                         default:
-                            stmt.setObject(i + 1, field.get(data));
+                            stmt.setObject(i + 1, fieldData);
                             break;
                     }
                 }
@@ -202,11 +216,14 @@ public class PgClient implements Lifecycle {
             stmt.executeBatch();
         } catch (Exception e) {
             log.error(String.format("Failed to save data of type %s",
-                                    dataList.get(0).getClass().getSimpleName()), e);
+                    dataList.get(0).getClass().getSimpleName()), e);
             return false;
         }
 
         return true;
+    }
+
+    private void setColumnValue(Object fieldValue, PreparedStatement stmt, int index) throws Exception {
     }
 
     private <R> List<R> execAndGetList(String sql, Class<R> clazz,
@@ -216,7 +233,7 @@ public class PgClient implements Lifecycle {
     }
 
     private <R> List<R> execute(String sql, Class<R> clazz,
-                                   Function<Exception, Void> exceptionHandler, boolean isQuery)
+                                Function<Exception, Void> exceptionHandler, boolean isQuery)
             throws SQLException {
 
         List<R> results = new ArrayList<>();
@@ -249,11 +266,13 @@ public class PgClient implements Lifecycle {
                         for (Field field : clazz.getDeclaredFields()) {
                             PersistentProperty property =
                                     field.getAnnotation(PersistentProperty.class);
-                            if (null == property)
+                            if (null == property) {
                                 continue;
+                            }
                             String name = property.name();
-                            if (!columnValues.containsKey(name))
+                            if (!columnValues.containsKey(name)) {
                                 continue;
+                            }
 
                             field.setAccessible(true);
                             Object value = columnValues.get(name);
@@ -279,10 +298,11 @@ public class PgClient implements Lifecycle {
 
             resultSet.close();
         } catch (SQLException e) {
-            if (null != exceptionHandler)
+            if (null != exceptionHandler) {
                 exceptionHandler.apply(e);
-            else
+            } else {
                 throw e;
+            }
         }
 
         return results;

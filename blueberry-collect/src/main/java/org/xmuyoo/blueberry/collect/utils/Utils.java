@@ -1,5 +1,6 @@
 package org.xmuyoo.blueberry.collect.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
@@ -53,5 +54,10 @@ public class Utils {
     @SneakyThrows
     public static <T> T deserialize(byte[] data, Class<T> clz) {
         return Utils.JSON.readValue(data, clz);
+    }
+
+    @SneakyThrows
+    public static <T> T deserialize(byte[] data, TypeReference<T> type) {
+        return Utils.JSON.readValue(data, type);
     }
 }
