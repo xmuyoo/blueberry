@@ -2,6 +2,25 @@ package org.xmuyoo.blueberry.collect.storage;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
+import com.google.common.base.Joiner;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -10,19 +29,15 @@ import org.xmuyoo.blueberry.collect.Lifecycle;
 import org.xmuyoo.blueberry.collect.domains.SeriesData;
 import org.xmuyoo.blueberry.collect.utils.Utils;
 
-import java.lang.reflect.Field;
-import java.sql.*;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 @Slf4j
 public class PgClient implements Lifecycle {
 
     private static final String INSERT_IGNORE_DATA_FORMAT =
-            "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT DO NOTHING";
+            "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT";
     private static final String INSERT_SPECIFIED_UNIQUE_DATA_FORMAT =
-            "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO NOTHING";
+            "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s)";
+
+    // Series data SQL format
     private static final String INSERT_SERIES_DATA_VALUES_SQL_FMT =
             "INSERT INTO values_%s (record_time, value, tag_id) VALUES(?, ?, ?)"
                     + " ON CONFLICT (record_time, tag_id) DO NOTHING";
@@ -31,8 +46,15 @@ public class PgClient implements Lifecycle {
                     + " ON CONFLICT (record_time, tag_id) DO NOTHING";
 
     private static final Timestamp TAG_TIMESTAMP = new Timestamp(1593532800); // 2020.07.01 00:00:00
-
+    private static final Joiner COMMA_SPACE_JOINER = Joiner.on(" , ");
     private final DruidDataSource dataSource;
+
+    @AllArgsConstructor
+    @Getter
+    private static class FieldProperty {
+        private Field field;
+        private PersistentProperty property;
+    }
 
     public PgClient(DruidDataSource dataSource) {
         this.dataSource = dataSource;
@@ -50,7 +72,15 @@ public class PgClient implements Lifecycle {
         }
     }
 
-    public <T> boolean saveIgnoreDuplicated(@NonNull List<T> dataList, Class<T> clz) {
+    public <T> void saveIgnoreDuplicated(@NonNull List<T> dataList, Class<T> clz) {
+        saveOrUpdate(dataList, clz, false);
+    }
+
+    public <T> void saveOrUpdate(@NonNull List<T> dataList, Class<T> clz) {
+        saveOrUpdate(dataList, clz, true);
+    }
+
+    private  <T> boolean saveOrUpdate(@NonNull List<T> dataList, Class<T> clz, boolean updateWhenConflict) {
         if (dataList.isEmpty()) {
             log.warn("Data is empty. Ignore saving.");
             return true;
@@ -69,17 +99,22 @@ public class PgClient implements Lifecycle {
         List<String> propertyNames = new ArrayList<>();
         Set<String> uniqueProperties = new HashSet<>();
         List<String> filedNames = new ArrayList<>();
+        List<FieldProperty> updateOnConflictColumns = new ArrayList<>();
         for (Field field : fields) {
             PersistentProperty property = field.getAnnotation(PersistentProperty.class);
             if (null == property) {
                 continue;
             }
 
+            final String persistFieldName = property.name();
             propertyList.add(property);
-            propertyNames.add(property.name());
+            propertyNames.add(persistFieldName);
             filedNames.add(field.getName());
             if (property.isUnique()) {
-                uniqueProperties.add(property.name());
+                uniqueProperties.add(persistFieldName);
+            }
+            if (updateWhenConflict && property.updateWhenConflict()) {
+                updateOnConflictColumns.add(new FieldProperty(field, property));
             }
         }
         if (propertyNames.isEmpty()) {
@@ -100,7 +135,16 @@ public class PgClient implements Lifecycle {
                     Utils.commaJoin(uniqueProperties));
         }
 
-        return saveData(dataList, filedNames, propertyList, insertSql);
+        if (updateWhenConflict) {
+            insertSql += " DO UPDATE SET " + COMMA_SPACE_JOINER.join(
+                    updateOnConflictColumns.stream()
+                                           .map(fp -> fp.property().name() + " = ?")
+                                           .collect(Collectors.toList()));
+        } else {
+            insertSql += " DO NOTHING";
+        }
+
+        return saveData(dataList, filedNames, propertyList, insertSql, updateOnConflictColumns);
     }
 
     public void saveSeriesData(String identifier, List<SeriesData> seriesDataList) {
@@ -173,7 +217,8 @@ public class PgClient implements Lifecycle {
     }
 
     private <T> boolean saveData(List<T> dataList, List<String> fieldNames,
-                                 List<PersistentProperty> properties, String insertSql) {
+                                 List<PersistentProperty> properties, String insertSql,
+                                 List<FieldProperty> updateOnConflictColumns) {
 
         try (DruidPooledConnection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(insertSql)) {
@@ -181,33 +226,16 @@ public class PgClient implements Lifecycle {
             for (T data : dataList) {
                 for (int i = 0; i < fieldNames.size(); i++) {
                     Field field = data.getClass().getDeclaredField(fieldNames.get(i));
-                    field.setAccessible(true);
-                    PersistentProperty property = properties.get(i);
+                    setPreparedValue(field, properties.get(i), data, stmt, i + 1);
+                }
 
-                    Object fieldData = field.get(data);
-                    switch (property.valueType()) {
-                        case Json:
-                            if (null != fieldData) {
-                                PGobject pGobject = new PGobject();
-                                pGobject.setType("json");
-                                pGobject.setValue(Utils.JSON.writeValueAsString(fieldData));
+                int j = fieldNames.size() + 1;
+                for (FieldProperty fieldProperty: updateOnConflictColumns) {
+                    String fieldName = fieldProperty.field().getName();
+                    Field field = data.getClass().getDeclaredField(fieldName);
+                    setPreparedValue(field, fieldProperty.property(), data, stmt, j);
 
-                                stmt.setObject(i + 1, pGobject);
-                            } else {
-                                stmt.setObject(i + 1, null);
-                            }
-                            break;
-                        case Text:
-                            if (null != fieldData) {
-                                stmt.setObject(i + 1, fieldData.toString());
-                            } else {
-                                stmt.setObject(i + 1, null);
-                            }
-                            break;
-                        default:
-                            stmt.setObject(i + 1, fieldData);
-                            break;
-                    }
+                    j++;
                 }
 
                 stmt.addBatch();
@@ -223,7 +251,33 @@ public class PgClient implements Lifecycle {
         return true;
     }
 
-    private void setColumnValue(Object fieldValue, PreparedStatement stmt, int index) throws Exception {
+    private void setPreparedValue(Field field, PersistentProperty property, Object data, PreparedStatement stmt, int index)
+            throws Exception {
+        field.setAccessible(true);
+        Object fieldData = field.get(data);
+        switch (property.valueType()) {
+            case Json:
+                if (null != fieldData) {
+                    PGobject pGobject = new PGobject();
+                    pGobject.setType("json");
+                    pGobject.setValue(Utils.JSON.writeValueAsString(fieldData));
+
+                    stmt.setObject(index, pGobject);
+                } else {
+                    stmt.setObject(index, null);
+                }
+                break;
+            case Text:
+                if (null != fieldData) {
+                    stmt.setObject(index, fieldData.toString());
+                } else {
+                    stmt.setObject(index, null);
+                }
+                break;
+            default:
+                stmt.setObject(index, fieldData);
+                break;
+        }
     }
 
     private <R> List<R> execAndGetList(String sql, Class<R> clazz,

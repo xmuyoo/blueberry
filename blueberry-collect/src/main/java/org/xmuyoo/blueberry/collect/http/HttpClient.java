@@ -1,11 +1,17 @@
 package org.xmuyoo.blueberry.collect.http;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.typesafe.config.Config;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -41,6 +47,8 @@ public class HttpClient implements Lifecycle {
     private RingBuffer<RequestWrapper> requestsQueueBuffer;
 
     private final OkHttpClient httpClient;
+
+    private Retryer<okhttp3.Response> retryer;
 
     public HttpClient() {
         httpClient = new OkHttpClient();
@@ -86,6 +94,11 @@ public class HttpClient implements Lifecycle {
             wrapper.responseHandler(handler);
         };
 
+        retryer = RetryerBuilder.<okhttp3.Response>newBuilder()
+                .withWaitStrategy(WaitStrategies.fibonacciWait(30, TimeUnit.SECONDS))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(6))
+                .retryIfException(t -> t instanceof SocketTimeoutException)
+                .build();
     }
 
     public static byte[] getResponseData(okhttp3.Response response) {
@@ -142,7 +155,7 @@ public class HttpClient implements Lifecycle {
 
         req.headers().forEach(builder::header);
 
-        okhttp3.Request request;
+        final okhttp3.Request request;
         switch (req.method()) {
             case GET:
                 request = builder.build();
@@ -150,6 +163,7 @@ public class HttpClient implements Lifecycle {
             case PUT:
                 builder.put(RequestBody.create(req.body()));
                 request = builder.build();
+                break;
             case POST:
                 builder.post(RequestBody.create(req.body()));
                 request = builder.build();
@@ -161,8 +175,7 @@ public class HttpClient implements Lifecycle {
                 break;
         }
 
-        okhttp3.Response response = httpClient.newCall(request).execute();
-
+        okhttp3.Response response = retryer.call(() -> httpClient.newCall(request).execute());
         R r = responseRFunction.apply(response);
         response.close();
 

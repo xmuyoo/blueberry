@@ -24,5 +24,7 @@ public @interface PersistentProperty {
      */
     boolean isUnique() default false;
 
+    boolean updateWhenConflict() default false;
+
     String description() default "";
 }

@@ -126,7 +126,7 @@ public class ConvertibleBondCodeCollector extends BasicCollector {
         }, ConvertibleBondCodeResponse.class);
 
         if (null != activeCodeList) {
-            storage.saveIgnoreDuplicated(activeCodeList, ConvertibleBondCode.class);
+            storage.saveOrUpdate(activeCodeList, ConvertibleBondCode.class);
         }
     }
 
@@ -169,7 +169,7 @@ public class ConvertibleBondCodeCollector extends BasicCollector {
         }, ConvertibleBondCodeResponse.class);
 
         if (null != delistedCodeList) {
-            storage.saveIgnoreDuplicated(delistedCodeList, ConvertibleBondCode.class);
+            storage.saveOrUpdate(delistedCodeList, ConvertibleBondCode.class);
         }
     }
 
