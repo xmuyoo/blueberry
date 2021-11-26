@@ -30,24 +30,24 @@ public class StockSnapshot {
     @PersistentProperty(name = "name", valueType = ValueType.Text)
     private String name;
 
-    @PersistentProperty(name = "pe_lyr", valueType = ValueType.Number)
+    @PersistentProperty(name = "pe_lyr", valueType = ValueType.Number, updateWhenConflict = true)
     private Double peLyr;
 
-    @PersistentProperty(name = "pb", valueType = ValueType.Number)
+    @PersistentProperty(name = "pb", valueType = ValueType.Number, updateWhenConflict = true)
     private Double pb;
 
-    @PersistentProperty(name = "dividend_yield", valueType = ValueType.Number)
+    @PersistentProperty(name = "dividend_yield", valueType = ValueType.Number, updateWhenConflict = true)
     private Double dividendYield;
 
-    @PersistentProperty(name = "market_capital", valueType = ValueType.Number)
+    @PersistentProperty(name = "market_capital", valueType = ValueType.Number, updateWhenConflict = true)
     private Double marketCapital;
 
-    @PersistentProperty(name = "total_shares", valueType = ValueType.Number)
+    @PersistentProperty(name = "total_shares", valueType = ValueType.Number, updateWhenConflict = true)
     private Number totalShares;
 
-    @PersistentProperty(name = "navps", valueType = ValueType.Number)
+    @PersistentProperty(name = "navps", valueType = ValueType.Number, updateWhenConflict = true)
     private Double navps;
 
-    @PersistentProperty(name = "last_close", valueType = ValueType.Number)
+    @PersistentProperty(name = "last_close", valueType = ValueType.Number, updateWhenConflict = true)
     private Double lastClose;
 }

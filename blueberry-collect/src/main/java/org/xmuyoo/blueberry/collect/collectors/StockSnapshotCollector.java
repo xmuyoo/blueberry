@@ -31,10 +31,10 @@ import java.util.function.Function;
 public class StockSnapshotCollector extends BasicCollector {
 
     private static final String STOCK_SNAPSHOT = "stock_snapshot";
-    private static final String COOKIE_STRING = "Hm_lvt_1db88642e346389874251b5a1eded6e3=1634136017,1635863052; device_id=94aee6be8ada348a95176a08545f9fea; s=c212bco9yi; xq_a_token=84594e5ed31d2073c04e20e6d5f6025ca3c9412e; xqat=84594e5ed31d2073c04e20e6d5f6025ca3c9412e; xq_r_token=7db1253145a2bfc99a82e274223cf9c06d8e9097; xq_id_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJ1aWQiOjEwMzkyMzQ0NTMsImlzcyI6InVjIiwiZXhwIjoxNjM4NDU1MDc1LCJjdG0iOjE2MzU4NjMwNzUzNjgsImNpZCI6ImQ5ZDBuNEFadXAifQ.WSdP1AufwTqD8I_lRJc4EABADJpdUHqfFxJ58YZYkXDcwTH_LZm_Oa2NR7yV4sySPOCKksH32u7Prnwbc7Th8gDKWxC5nYLWs3QVN1jNys61D1WROVAGhEqYm-jaDNrn1iprDHl0P3LNkEMA2gG2h1o75PmBJngKehU1-lZXGblr4vdLoCWaF0m2FrgvrXG5f_Wx4C-BugnBOGfVjDDH6R9xvq502RKKIEfSNxR58LQI3QeLVlHyymnRXSK4GJdUQmky5Oz8jN0z4WgADXPcXwlDeSm1wR_VAiSMgm2TTsM7keKSrsfTlRQFbR4jOpMgIHaQT-YFBpL67c7A8Ss9Fg; xq_is_login=1; u=1039234453; is_overseas=0; Hm_lpvt_1db88642e346389874251b5a1eded6e3=1635863077";
 
     private final HttpClient http;
     private final String xqUrlFmt;
+    private String cookie;
 
     public StockSnapshotCollector(PgClient storage, HttpClient httpClient) {
         super(STOCK_SNAPSHOT, storage);
@@ -42,6 +42,7 @@ public class StockSnapshotCollector extends BasicCollector {
 
         Config config = ConfigFactory.load("stock-snapshot");
         this.xqUrlFmt = config.getString("xq.snapshot.url.format");
+        this.cookie = config.getString("cookie");
     }
 
     @Override
@@ -65,7 +66,7 @@ public class StockSnapshotCollector extends BasicCollector {
             Request request = new Request();
             request.url(url);
             request.method(HttpMethod.GET);
-            request.headers(ImmutableMap.of("Cookie", COOKIE_STRING));
+            request.headers(ImmutableMap.of("Cookie", cookie));
 
             StockSnapshot stockSnapshot = http.sync(request, new Function<Response, StockSnapshot>() {
                 @Override
@@ -115,7 +116,7 @@ public class StockSnapshotCollector extends BasicCollector {
             idx++;
         }
 
-        this.storage.saveIgnoreDuplicated(stockSnapshotList, StockSnapshot.class);
+        this.storage.saveOrUpdate(stockSnapshotList, StockSnapshot.class);
 
         return true;
     }
