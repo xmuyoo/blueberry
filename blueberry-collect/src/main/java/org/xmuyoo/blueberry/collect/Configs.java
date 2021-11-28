@@ -77,4 +77,8 @@ public class Configs {
     public boolean runConvertBondCodeList() {
         return this.tasksSwitchConfig.getBoolean("convert.bond.code.list");
     }
+
+    public boolean runStockKLine() {
+        return this.tasksSwitchConfig.getBoolean("stock.k.line");
+    }
 }

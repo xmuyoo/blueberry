@@ -19,6 +19,9 @@ public class ConvertibleBondCode {
     @PersistentProperty(name = "name", valueType = ValueType.Text, description = "可转债名称")
     private String name;
 
+    @PersistentProperty(name = "market_cd", valueType = ValueType.Text, description = "交易所代码")
+    private String marketCd;
+
     @PersistentProperty(name = "stock_code", valueType = ValueType.Text, description = "正股代码")
     private String stockCode;
 

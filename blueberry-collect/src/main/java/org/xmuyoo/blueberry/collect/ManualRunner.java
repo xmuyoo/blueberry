@@ -5,6 +5,7 @@ import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.xmuyoo.blueberry.collect.collectors.ConvertibleBondCodeCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockCodeCollector;
+import org.xmuyoo.blueberry.collect.collectors.StockKLineCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockSnapshotCollector;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
@@ -45,6 +46,11 @@ public class ManualRunner {
             ConvertibleBondCodeCollector convertibleBondCodeCollector =
                     new ConvertibleBondCodeCollector(storage, httpClient);
             convertibleBondCodeCollector.run();
+        }
+        // Stock K Line
+        if (appConfigs.runStockKLine()) {
+            StockKLineCollector stockKLineCollector = new StockKLineCollector(storage, httpClient);
+            stockKLineCollector.run();
         }
 
         storage.shutdown();

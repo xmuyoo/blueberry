@@ -135,7 +135,4 @@ public abstract class BasicCollector implements Collector {
 
         return schemas;
     }
-
-
-
 }

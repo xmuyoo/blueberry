@@ -2,6 +2,7 @@
 create table if not exists convertible_bond_code (
     code                 text not null primary key, -- 可转债代码
     name                 text not null default '', -- 名称
+    market_cd            text not null default '', -- 交易所代码
     stock_code           text not null default '', -- 正股代码
     stock_name           text not null default '', -- 正股名称
     active               boolean not null, -- 是否上市

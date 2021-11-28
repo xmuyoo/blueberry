@@ -12,7 +12,7 @@ import org.xmuyoo.blueberry.collect.utils.Utils;
         @UniqueConstraint({"namespace", "name"})})
 public class DataSchema {
 
-    @PersistentProperty(name = "id", valueType = ValueType.Text)
+    @PersistentProperty(name = "id", valueType = ValueType.Text, isUnique = true)
     private String id;
 
     @PersistentProperty(name = "namespace", valueType = ValueType.Text)

@@ -67,7 +67,7 @@ public class HttpClient implements Lifecycle {
         ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("http-client-%s").build();
         disruptor =
                 new Disruptor<>(RequestWrapper::new, RING_BUFFER_SIZE, factory, ProducerType.MULTI,
-                                new BlockingWaitStrategy());
+                        new BlockingWaitStrategy());
         disruptor.handleEventsWithWorkerPool(requestHandlers);
         disruptor.setDefaultExceptionHandler(new ExceptionHandler<RequestWrapper>() {
             @Override
@@ -148,10 +148,7 @@ public class HttpClient implements Lifecycle {
 
     public <R> R sync(Request req, Function<okhttp3.Response, R> responseRFunction) throws Exception {
         okhttp3.Request.Builder builder = new okhttp3.Request.Builder();
-        if (StringUtils.isBlank(req.url()))
-            builder.url(req.fullUrl());
-        else
-            builder.url(req.url());
+        builder.url(req.fullUrl());
 
         req.headers().forEach(builder::header);
 
@@ -189,8 +186,9 @@ public class HttpClient implements Lifecycle {
 
     @Override
     public void shutdown() {
-        if (null != disruptor)
+        if (null != disruptor) {
             disruptor.shutdown();
+        }
     }
 
     @NoArgsConstructor
@@ -247,7 +245,7 @@ public class HttpClient implements Lifecycle {
                         public void onFailure(@NotNull Call call, @NotNull IOException e) {
                             okhttp3.Request request = call.request();
                             log.error(String.format("Failed to request: %s", request.toString()),
-                                      e);
+                                    e);
                         }
 
                         @Override
@@ -258,8 +256,9 @@ public class HttpClient implements Lifecycle {
 
                             byte[] data = null;
                             ResponseBody responseBody = response.body();
-                            if (null != responseBody)
+                            if (null != responseBody) {
                                 data = responseBody.bytes();
+                            }
 
                             Map<String, String> headers = new HashMap<>();
                             Iterator<kotlin.Pair<String, String>> iterator =
@@ -278,8 +277,9 @@ public class HttpClient implements Lifecycle {
             } catch (IOException e) {
                 log.error(String.format("Failed to request %s", req.toString()), e);
             } finally {
-                if (null != syncResponse)
+                if (null != syncResponse) {
                     syncResponse.close();
+                }
             }
         }
     }

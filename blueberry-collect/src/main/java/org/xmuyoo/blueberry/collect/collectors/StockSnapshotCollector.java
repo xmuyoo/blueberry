@@ -40,9 +40,11 @@ public class StockSnapshotCollector extends BasicCollector {
         super(STOCK_SNAPSHOT, storage);
         this.http = httpClient;
 
-        Config config = ConfigFactory.load("stock-snapshot");
-        this.xqUrlFmt = config.getString("xq.snapshot.url.format");
-        this.cookie = config.getString("cookie");
+        Config stockSnapshotConfig = ConfigFactory.load("stock-snapshot");
+        this.xqUrlFmt = stockSnapshotConfig.getString("xq.snapshot.url.format");
+
+        Config xueqiuCfg = ConfigFactory.load("xueqiu");
+        this.cookie = xueqiuCfg.getString("cookie");
     }
 
     @Override

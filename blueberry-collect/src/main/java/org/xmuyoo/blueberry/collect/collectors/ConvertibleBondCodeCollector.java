@@ -16,7 +16,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
-import org.xmuyoo.blueberry.collect.Configs;
 import org.xmuyoo.blueberry.collect.domains.ConvertibleBondCode;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
@@ -207,6 +206,9 @@ public class ConvertibleBondCodeCollector extends BasicCollector {
 
         @JsonProperty("bond_nm")
         private String bondName;
+
+        @JsonProperty("market_cd")
+        private String marketCd;
 
         @JsonProperty("price")
         private Double price;

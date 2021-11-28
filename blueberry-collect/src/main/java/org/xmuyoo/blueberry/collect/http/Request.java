@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 
 import java.util.HashMap;
@@ -50,16 +51,25 @@ public class Request {
     // Sent timestamp
     private long sentTime = System.currentTimeMillis();
 
+    public void setFullCookie(String cookieValue) {
+        this.headers.put("Cookie", cookieValue);
+    }
+
     public String fullUrl() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(protocol.protocolValue()).append("://");
+        if (StringUtils.isBlank(url)) {
+            stringBuilder.append(protocol.protocolValue()).append("://");
 
-        String location;
-        if (0 == port)
-            location = host;
-        else
-            location = host + ":" + port;
-        stringBuilder.append(location);
+            String location;
+            if (0 == port)
+                location = host;
+            else
+                location = host + ":" + port;
+            stringBuilder.append(location);
+        } else {
+            stringBuilder.append(url);
+        }
+
         if (null != parameters && !parameters.isEmpty()) {
             String queryStr = QUERY_JOINER.join(
                     parameters.entrySet()
