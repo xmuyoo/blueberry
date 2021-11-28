@@ -162,7 +162,9 @@ public class HttpClient implements Lifecycle {
                 request = builder.build();
                 break;
             case POST:
-                builder.post(RequestBody.create(req.body()));
+                if (null != req.body()) {
+                    builder.post(RequestBody.create(req.body()));
+                }
                 request = builder.build();
                 break;
             default:

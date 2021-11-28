@@ -81,4 +81,8 @@ public class Configs {
     public boolean runStockKLine() {
         return this.tasksSwitchConfig.getBoolean("stock.k.line");
     }
+
+    public boolean runConvertibleBondHistory() {
+        return this.tasksSwitchConfig.getBoolean("convertible.bond.history");
+    }
 }
