@@ -2,6 +2,7 @@ package org.xmuyoo.blueberry.collect.collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.time.LocalDate;
@@ -9,14 +10,15 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.http.HttpMethod;
 import org.xmuyoo.blueberry.collect.domains.ConvertibleBondCode;
 import org.xmuyoo.blueberry.collect.domains.ConvertibleBondHistory;
@@ -31,9 +33,29 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
     private static final String CONVERTIBLE_BOND_HISTORY = "convertible_bond_history";
 
     private static final String HISTORY_DATA_URL_FMT =
-            "https://www.jisilu.cn/data/cbnew/detail_hist/%s?___jsl=LST___t=" + System.currentTimeMillis();
+            "https://www.jisilu.cn/data/cbnew/detail_hist/%s?___jsl=LST___t=%s";
     private static final ZoneOffset TIME_ZONE_OFFSET = ZoneOffset.ofHours(8);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private static final Map<String, String> JISILU_HEADERS = ImmutableMap.<String, String>builder()
+            .put("Host", "www.jisilu.cn")
+            .put("Pragma", "no-cache")
+            .put("sec-ch-ua", "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Google Chrome\";v=\"96\"")
+            .put("sec-ch-ua-mobile", "?0")
+            .put("sec-ch-ua-platform", "macOS")
+            .put("Sec-Fetch-Dest", "document")
+            .put("Sec-Fetch-Mode", "navigate")
+            .put("Sec-Fetch-Site", "none")
+            .put("Sec-Fetch-User", "?1")
+            .put("Upgrade-Insecure-Requests", "1")
+            .put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36")
+            .put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            .put("Connection", "keep-alive")
+            .put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+            .put("Accept-Encoding", "gzip, deflate, br")
+            .put("Accept-Language", "zh-CN,zh;q=0.9")
+            .put("Cache-Control", "no-cache")
+            .build();
 
     private final HttpClient http;
     private final String cookie;
@@ -61,10 +83,13 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
         for (ConvertibleBondCode convertibleBondCode : convertibleBondCodeList) {
             log.info("Collect convertible bond history for [{}/{}] {}",
                     idx, total, convertibleBondCode.name());
-            String url = String.format(HISTORY_DATA_URL_FMT, convertibleBondCode.code());
+            String url = String.format(HISTORY_DATA_URL_FMT, convertibleBondCode.code(), System.currentTimeMillis());
             Request request = new Request();
             request.url(url);
-            request.method(HttpMethod.POST);
+            request.method(HttpMethod.GET);
+            Map<String, String> headers = new HashMap<>(JISILU_HEADERS);
+            headers.put("Cookie", cookie);
+            request.headers(headers);
 
             try {
                 List<ConvertibleBondHistory> historyList = http.sync(request, resp -> {
@@ -82,7 +107,7 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
                                    Cell cell = row.cell();
                                    ConvertibleBondHistory history = new ConvertibleBondHistory();
                                    history.code(convertibleBondCode.code());
-                                   LocalDate localDate= LocalDate.parse(cell.lastChgDt(), DATE_FORMATTER);
+                                   LocalDate localDate = LocalDate.parse(cell.lastChgDt(), DATE_FORMATTER);
                                    long recordTime = localDate.toEpochSecond(LocalTime.of(0, 0), TIME_ZONE_OFFSET);
                                    history.recordTime(recordTime);
                                    history.ytmRt(getDoubleValue(cell.ytmRt()));
@@ -114,7 +139,7 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
             return (Long) value;
         } else if (value instanceof String) {
             String val = (String) value;
-            if (!NumberUtils.isDigits(val)) {
+            if (val.equals("-")) {
                 return null;
             } else {
                 return Long.parseLong(val);
@@ -125,7 +150,7 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
     }
 
     private static Double getDoubleValue(String value) {
-        if (!NumberUtils.isDigits(value)) {
+        if (value.equals("-")) {
             return null;
         } else if (value.contains("%")) {
             return getDoubleFromPercentStr(value);

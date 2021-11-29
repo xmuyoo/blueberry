@@ -6,32 +6,39 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.lmax.disruptor.*;
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.EventTranslatorTwoArg;
+import com.lmax.disruptor.ExceptionHandler;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.WorkHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.typesafe.config.Config;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.zip.GZIPInputStream;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
-import org.apache.commons.lang3.StringUtils;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
 import org.xmuyoo.blueberry.collect.Configs;
 import org.xmuyoo.blueberry.collect.Lifecycle;
 import org.xmuyoo.blueberry.collect.ResponseHandler;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ThreadFactory;
-import java.util.function.Function;
 import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Slf4j
@@ -116,20 +123,47 @@ public class HttpClient implements Lifecycle {
     }
 
     public static <T> T getResponseData(okhttp3.Response response, Class<T> clz) {
+        String contentEncoding = response.headers().get("Content-Encoding");
         byte[] data = getResponseData(response);
         if (null == data) {
             return null;
+        } else if ("gzip".equals(contentEncoding)) {
+            return Utils.deserialize(decompressGZIPBytes(data), clz);
         } else {
             return Utils.deserialize(data, clz);
         }
     }
 
     public static <T> T getResponseData(okhttp3.Response response, TypeReference<T> type) {
+        String contentEncoding = response.headers().get("Content-Encoding");
         byte[] data = getResponseData(response);
         if (null == data) {
             return null;
+        } else if ("gzip".equals(contentEncoding)) {
+            return Utils.deserialize(decompressGZIPBytes(data), type);
         } else {
             return Utils.deserialize(data, type);
+        }
+    }
+
+    public static byte[] decompressGZIPBytes(byte[] zipBytes) {
+        try (ByteArrayInputStream in = new ByteArrayInputStream(zipBytes);
+             GZIPInputStream gzipInputStream = new GZIPInputStream(in);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()
+        ) {
+            int res = 0;
+            byte[] buf = new byte[1024];
+            while (res >= 0) {
+                res = gzipInputStream.read(buf, 0, buf.length);
+                if (res > 0) {
+                    out.write(buf, 0, res);
+                }
+            }
+
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("Failed to decompress gzip bytes", e);
+            return null;
         }
     }
 
