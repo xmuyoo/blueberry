@@ -24,7 +24,7 @@ public class DataSchema {
     @PersistentProperty(name = "type", valueType = ValueType.Text)
     private String type;
 
-    @PersistentProperty(name = "description", valueType = ValueType.Text)
+    @PersistentProperty(name = "description", valueType = ValueType.Text, updateWhenConflict = true)
     private String description;
 
     @PersistentProperty(name = "collect_task_id", valueType = ValueType.Text)

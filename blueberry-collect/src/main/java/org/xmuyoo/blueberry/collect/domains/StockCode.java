@@ -22,18 +22,18 @@ public class StockCode {
         }
     }
 
-    @PersistentProperty(name = "code", valueType = ValueType.Text, isUnique = true)
+    @PersistentProperty(name = "code", valueType = ValueType.Text, isUnique = true, description = "股票代码")
     private String code;
 
-    @PersistentProperty(name = "name", valueType = ValueType.Text)
+    @PersistentProperty(name = "name", valueType = ValueType.Text, description = "股票名称")
     private String name;
 
-    @PersistentProperty(name = "exchange", valueType = ValueType.Text)
+    @PersistentProperty(name = "exchange", valueType = ValueType.Text, description = "交易所代码")
     private Exchange exchange;
 
-    @PersistentProperty(name = "category", valueType = ValueType.Text)
+    @PersistentProperty(name = "category", valueType = ValueType.Text, description = "分类")
     private String category;
 
-    @PersistentProperty(name = "location", valueType = ValueType.Text)
+    @PersistentProperty(name = "location", valueType = ValueType.Text, description = "地区")
     private String location;
 }

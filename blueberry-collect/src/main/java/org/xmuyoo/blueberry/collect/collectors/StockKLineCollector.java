@@ -78,13 +78,15 @@ public class StockKLineCollector extends BasicCollector {
             long beginFromTs = getBeginFromTs(stockCode.code());
             if (nowTs - beginFromTs < ONE_DAY_MS) {
                 log.info("Skip {}", stockCode.name());
-                if (alreadyCollected % 100 == 0) {
-                    log.info("Collect stocks processing: {}/{}", alreadyCollected, totalCnt);
-                }
                 alreadyCollected++;
                 continue;
             }
             try {
+                log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
+                        stockCode.exchange().name(), stockCode.code(), name,
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFromTs), SHANGHAI)
+                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
                 collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), beginFromTs);
             } catch (Exception e) {
                 log.warn("Failed to collect stock k line for: {}", stockCode.name(), e);
@@ -106,14 +108,15 @@ public class StockKLineCollector extends BasicCollector {
             Long beginFromTs = getBeginFromTs(convertibleBondCode.code());
             if (nowTs - beginFromTs < ONE_DAY_MS) {
                 log.info("Skip {}", convertibleBondCode.name());
-                if (alreadyCollected % 100 == 0) {
-                    log.info("Collect convertible bond code processing: {}/{}", alreadyCollected, totalCnt);
-                }
                 alreadyCollected++;
                 continue;
             }
 
             try {
+                log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
+                        exchange, convertibleBondCode.code(), convertibleBondCode.name(),
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFromTs), SHANGHAI)
+                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 collectSingleData(StockCode.Exchange.valueOf(exchange.toUpperCase()),
                         convertibleBondCode.code(), convertibleBondCode.name(), beginFromTs);
             } catch (Exception e) {
@@ -140,11 +143,6 @@ public class StockKLineCollector extends BasicCollector {
 
     private void collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
             throws Exception {
-        log.info("Collect KLine for {}{} {} from {}",
-                exchange.name(), code, name,
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFrom), SHANGHAI)
-                             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
         Request request = new Request();
         request.url(K_LINE_URL);
         Map<String, String> parameters = new HashMap<>(K_LINE_URL_FIX_PARAMS);

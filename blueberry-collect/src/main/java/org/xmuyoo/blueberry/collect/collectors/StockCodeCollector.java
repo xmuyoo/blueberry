@@ -37,15 +37,6 @@ public class StockCodeCollector extends BasicCollector {
 
     @Override
     protected List<DataSchema> getDataSchemaList() {
-        DataSchema stockCode =
-                new DataSchema("stock_code", "code", ValueType.Text,
-                        "中国上交所和深交所股票代码", this.collectorName);
-        DataSchema stockName =
-                new DataSchema("stock_code", "name", ValueType.Text,
-                        "中国上交所和深交所股票名称", this.collectorName);
-        DataSchema stockExchange =
-                new DataSchema("stock_code", "exchange", ValueType.Text,
-                        "中国股票所属交易所", this.collectorName);
-        return Arrays.asList(stockCode, stockName, stockExchange);
+        return toSchemaList(StockCode.class);
     }
 }

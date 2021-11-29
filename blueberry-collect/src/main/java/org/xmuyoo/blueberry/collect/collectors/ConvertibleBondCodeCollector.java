@@ -149,6 +149,7 @@ public class ConvertibleBondCodeCollector extends BasicCollector {
                                           ConvertibleBondCode code = new ConvertibleBondCode();
                                           code.code(cell.bondId());
                                           code.name(cell.bondName());
+                                          code.marketCd(cell.marketCd());
                                           code.active(false);
                                           code.delisted(true);
                                           code.stockCode(cell.stockId());

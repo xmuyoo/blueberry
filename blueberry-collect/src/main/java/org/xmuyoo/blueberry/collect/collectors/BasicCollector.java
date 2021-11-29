@@ -5,22 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Response;
 import org.springframework.util.StringUtils;
 import org.xmuyoo.blueberry.collect.Collector;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.storage.PersistentProperty;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 import org.xmuyoo.blueberry.collect.storage.ValueType;
-import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Slf4j
 public abstract class BasicCollector implements Collector {
-
-    private static final String DATA_SCHEMA_MAPPING_SQL_FORMAT =
-            "INSERT INTO data_schema(collect_task_id, data_schema_id) " +
-                    "VALUES('%s', '%s') " +
-                    "ON CONFLICT(collect_task_id, data_schema_id) DO NOTHING";
 
     protected String collectorName;
     protected volatile boolean isRunning = true;
@@ -56,7 +49,7 @@ public abstract class BasicCollector implements Collector {
 
     @Override
     public void run() {
-        log.info("Running {} collector", this.collectorName);
+        log.info("Start running collector: {}", this.collectorName);
         registerDataSchema();
         start();
 
@@ -93,7 +86,7 @@ public abstract class BasicCollector implements Collector {
     private void registerDataSchema() {
         List<DataSchema> dataSchemaList = getDataSchemaList();
         try {
-            storage.saveIgnoreDuplicated(dataSchemaList, DataSchema.class);
+            storage.saveOrUpdate(dataSchemaList, DataSchema.class);
         } catch (Exception e) {
             log.error(String.format("Failed to register data schema for collector [%s:%s]",
                     name(), collectorName), e);

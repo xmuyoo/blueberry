@@ -111,7 +111,7 @@ public class StockSnapshotCollector extends BasicCollector {
             TimeUnit.MILLISECONDS.sleep(10);
 
             if (idx % 100 == 0) {
-                this.storage.saveIgnoreDuplicated(stockSnapshotList, StockSnapshot.class);
+                this.storage.saveOrUpdate(stockSnapshotList, StockSnapshot.class);
                 stockSnapshotList.clear();
             }
 
