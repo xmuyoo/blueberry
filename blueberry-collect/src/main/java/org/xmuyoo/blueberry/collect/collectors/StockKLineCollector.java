@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +36,8 @@ public class StockKLineCollector extends BasicCollector {
     private static final Map<String, String> K_LINE_URL_FIX_PARAMS = ImmutableMap.of(
             "indicator", "chg,kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance",
             "period", "day",
-            "type", "after",
-            "count", "1000");
+            "type", "before",
+            "count", "-1000");
 
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Long ONE_DAY_MS = 86400L * 1000;
@@ -75,19 +77,24 @@ public class StockKLineCollector extends BasicCollector {
         int totalCnt = stockCodeList.size();
         int alreadyCollected = 1;
         for (StockCode stockCode : stockCodeList) {
-            long beginFromTs = getBeginFromTs(stockCode.code());
-            if (nowTs - beginFromTs < ONE_DAY_MS) {
-                log.info("Skip {}", stockCode.name());
-                alreadyCollected++;
-                continue;
-            }
             try {
-                log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
-                        stockCode.exchange().name(), stockCode.code(), stockCode.name(),
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFromTs), SHANGHAI)
-                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                if (hasCollectedHistory(stockCode)) {
+                    long beginFromTs = getBeginFromTs(stockCode.code());
+                    if (nowTs - beginFromTs < ONE_DAY_MS) {
+                        log.info("Skip {}", stockCode.name());
+                        alreadyCollected++;
+                        continue;
+                    }
+                    log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
+                            stockCode.exchange().name(), stockCode.code(), stockCode.name(),
+                            timestampToLocalDate(beginFromTs));
 
-                collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), beginFromTs);
+                    collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), beginFromTs);
+                } else {
+                    log.info("[{}/{}] To collect history of {}{} {}", alreadyCollected, totalCnt,
+                            stockCode.exchange().name(), stockCode.code(), stockCode.name());
+                    collectHistory(stockCode);
+                }
             } catch (Exception e) {
                 log.warn("Failed to collect stock k line for: {}", stockCode.name(), e);
             }
@@ -97,38 +104,22 @@ public class StockKLineCollector extends BasicCollector {
             alreadyCollected++;
         }
 
-        // Collect convertible bond code
-        List<ConvertibleBondCode> convertibleBondCodeList = storage.queryList(
-                "SELECT code, name, stock_code FROM convertible_bond_code WHERE delisted = false", ConvertibleBondCode.class);
-        totalCnt = convertibleBondCodeList.size();
-        alreadyCollected = 1;
-        for (ConvertibleBondCode convertibleBondCode : convertibleBondCodeList) {
-            String exchange = storage.queryOne(
-                    "SELECT exchange FROM stock_code WHERE code = '" + convertibleBondCode.stockCode() + "'");
-            Long beginFromTs = getBeginFromTs(convertibleBondCode.code());
-            if (nowTs - beginFromTs < ONE_DAY_MS) {
-                log.info("Skip {}", convertibleBondCode.name());
-                alreadyCollected++;
-                continue;
-            }
-
-            try {
-                log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
-                        exchange, convertibleBondCode.code(), convertibleBondCode.name(),
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFromTs), SHANGHAI)
-                                     .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                collectSingleData(StockCode.Exchange.valueOf(exchange.toUpperCase()),
-                        convertibleBondCode.code(), convertibleBondCode.name(), beginFromTs);
-            } catch (Exception e) {
-                log.warn("Failed to collect stock k line for: {}", convertibleBondCode.name(), e);
-            }
-            if (alreadyCollected % 100 == 0) {
-                log.info("Collect convertible bond code processing: {}/{}", alreadyCollected, totalCnt);
-            }
-            alreadyCollected++;
-        }
-
         return true;
+    }
+
+    private void collectHistory(StockCode stockCode) throws Exception {
+        Long beginTs = getEarliestTime(stockCode);
+        if (null == beginTs) {
+            beginTs = System.currentTimeMillis();
+        }
+        while (beginTs > defaultBeginFromTs) {
+            log.info("Collect {} before {}", stockCode.name(), timestampToLocalDate(beginTs));
+            Long newBeginTs = collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), beginTs);
+            if (null == newBeginTs || beginTs.equals(newBeginTs)) {
+                break;
+            }
+            beginTs = newBeginTs;
+        }
     }
 
     private Long getBeginFromTs(String code) throws Exception {
@@ -141,7 +132,22 @@ public class StockKLineCollector extends BasicCollector {
         return beginFrom;
     }
 
-    private void collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
+    private boolean hasCollectedHistory(StockCode stockCode) throws Exception {
+        Long earliestTime = getEarliestTime(stockCode);
+        return null != earliestTime && earliestTime <= defaultBeginFromTs;
+    }
+
+    private Long getEarliestTime(StockCode stockCode) throws Exception {
+        final String sql = "SELECT MIN(record_time) FROM stock_k_line WHERE code = '" + stockCode.code() + "'";
+        return storage.queryOne(sql);
+    }
+
+    private static String timestampToLocalDate(Long timestamp) {
+       return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), SHANGHAI)
+                           .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    private Long collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
             throws Exception {
         Request request = new Request();
         request.url(K_LINE_URL);
@@ -167,10 +173,13 @@ public class StockKLineCollector extends BasicCollector {
 
         if (null == kLineData) {
             log.warn("Failed to collect stock K line data for: {}", code);
-            return;
+            return null;
         }
 
         storage.saveIgnoreDuplicated(kLineData, StockKLine.class);
+        kLineData.sort(Comparator.comparingLong(StockKLine::recordTime));
+
+        return kLineData.get(0).recordTime();
     }
 
     @Getter
