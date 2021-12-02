@@ -83,7 +83,7 @@ public class StockKLineCollector extends BasicCollector {
             }
             try {
                 log.info("[{}/{}] KLine for {}{} {} from {}", alreadyCollected, totalCnt,
-                        stockCode.exchange().name(), stockCode.code(), name,
+                        stockCode.exchange().name(), stockCode.code(), stockCode.name(),
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(beginFromTs), SHANGHAI)
                                      .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
