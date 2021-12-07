@@ -13,41 +13,54 @@ import org.xmuyoo.blueberry.collect.storage.ValueType;
 @Persistent(name = "stock_snapshot")
 public class StockSnapshot {
 
-    public static final String CODE = "code";
-    public static final String NAME = "name";
-    public static final String PE_LYR = "pe_lyr";
-    public static final String PB = "pb";
-    public static final String DIVIDEND_YIELD = "dividend_yield";
-    public static final String MARKET_CAPITAL = "market_capital";
-    public static final String TOTAL_SHARES = "total_shares";
-    public static final String NAVPS = "navps";
-    public static final String LAST_CLOSE = "last_close";
-
-
-    @PersistentProperty(name = "code", valueType = ValueType.Text, isUnique = true)
+    @PersistentProperty(name = "code", valueType = ValueType.Text, isUnique = true, description = "股票代码")
     private String code;
 
-    @PersistentProperty(name = "name", valueType = ValueType.Text)
+    @PersistentProperty(name = "name", valueType = ValueType.Text, description = "股票名称")
     private String name;
 
-    @PersistentProperty(name = "pe_lyr", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "pe_lyr", valueType = ValueType.Number, updateWhenConflict = true, description = "市盈率（静）")
     private Double peLyr;
 
-    @PersistentProperty(name = "pb", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "pe_ttm", valueType = ValueType.Number, updateWhenConflict = true, description = "市盈率（TTM）")
+    private Double peTtm;
+
+    @PersistentProperty(name = "pb", valueType = ValueType.Number, updateWhenConflict = true, description = "市净率")
     private Double pb;
 
-    @PersistentProperty(name = "dividend_yield", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "dividend_yield", valueType = ValueType.Number, updateWhenConflict = true, description = "股息率")
     private Double dividendYield;
 
-    @PersistentProperty(name = "market_capital", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "market_capital", valueType = ValueType.Number, updateWhenConflict = true, description = "总市值")
     private Double marketCapital;
 
-    @PersistentProperty(name = "total_shares", valueType = ValueType.Number, updateWhenConflict = true)
-    private Number totalShares;
+    @PersistentProperty(name = "total_shares", valueType = ValueType.Number, updateWhenConflict = true, description = "总股本")
+    private Long totalShares;
 
-    @PersistentProperty(name = "navps", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "navps", valueType = ValueType.Number, updateWhenConflict = true, description = "每股净资产")
     private Double navps;
 
-    @PersistentProperty(name = "last_close", valueType = ValueType.Number, updateWhenConflict = true)
+    @PersistentProperty(name = "last_close", valueType = ValueType.Number, updateWhenConflict = true, description = "昨日收盘价")
     private Double lastClose;
+
+    @PersistentProperty(name = "amount", valueType = ValueType.Number, updateWhenConflict = true, description = "成交额")
+    private Double amount;
+
+    @PersistentProperty(name = "volume", valueType = ValueType.Number, updateWhenConflict = true, description = "成交量")
+    private Double volume;
+
+    @PersistentProperty(name = "volume_ratio", valueType = ValueType.Number, updateWhenConflict = true, description = "量比")
+    private Double volumeRatio;
+
+    @PersistentProperty(name = "float_market_capital", valueType = ValueType.Number, updateWhenConflict = true, description = "流通市值")
+    private Double floatMarketCapital;
+
+    @PersistentProperty(name = "high52w", valueType = ValueType.Number, updateWhenConflict = true, description = "52 周最高")
+    private Double high52w;
+
+    @PersistentProperty(name = "low52w", valueType = ValueType.Number, updateWhenConflict = true, description = "52周最低")
+    private Double low52w;
+
+    @PersistentProperty(name = "turnover_rate", valueType = ValueType.Number, updateWhenConflict = true, description = "换手率")
+    private Double turnoverRate;
 }

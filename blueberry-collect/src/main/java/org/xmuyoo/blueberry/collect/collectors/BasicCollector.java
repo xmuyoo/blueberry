@@ -1,9 +1,12 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.xmuyoo.blueberry.collect.Collector;
@@ -127,5 +130,38 @@ public abstract class BasicCollector implements Collector {
         }
 
         return schemas;
+    }
+
+    @SneakyThrows
+    public static <T> T mapToEntity(Map<String, Object> mapData, Class<T> clz) {
+        Constructor<T> constructor = clz.getConstructor();
+        T entity = constructor.newInstance();
+        for (Field field : clz.getDeclaredFields()) {
+            PersistentProperty persistentProperty = field.getAnnotation(PersistentProperty.class);
+            if (null == persistentProperty) {
+                continue;
+            }
+
+            field.setAccessible(true);
+            final String persistentName = persistentProperty.name();
+            Object value = mapData.get(persistentName);
+            if (null == value) {
+                continue;
+            }
+
+            final ValueType valueType = persistentProperty.valueType();
+            final Class<?> valueClz = field.getType();
+            if (ValueType.Number.equals(valueType)) {
+                if (Double.class.equals(valueClz)) {
+                    field.set(entity, Double.parseDouble(value.toString()));
+                } else if (Long.class.equals(valueClz)) {
+                    field.set(entity, Long.parseLong(value.toString()));
+                }
+            } else {
+                field.set(entity, value);
+            }
+        }
+
+        return entity;
     }
 }
