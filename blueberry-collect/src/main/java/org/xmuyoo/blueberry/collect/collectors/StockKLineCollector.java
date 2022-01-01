@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -70,7 +71,11 @@ public class StockKLineCollector extends BasicCollector {
     @SneakyThrows
     @Override
     protected boolean collect() {
-        long nowTs = System.currentTimeMillis();
+        long nowTs = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Shanghai"))
+                                  .withHour(0)
+                                  .withMinute(0)
+                                  .withSecond(0)
+                                  .toEpochSecond(ZoneOffset.ofHours(8)) * 1000;
         // Collect stock k line data
         List<StockCode> stockCodeList = this.storage.queryList(
                 "SELECT code, name, exchange FROM stock_code", StockCode.class);
@@ -80,7 +85,7 @@ public class StockKLineCollector extends BasicCollector {
             try {
                 if (hasCollectedHistory(stockCode)) {
                     long beginFromTs = getBeginFromTs(stockCode.code());
-                    if (nowTs - beginFromTs < ONE_DAY_MS) {
+                    if (nowTs - beginFromTs <= ONE_DAY_MS) {
                         log.info("Skip {}", stockCode.name());
                         alreadyCollected++;
                         continue;
@@ -89,7 +94,7 @@ public class StockKLineCollector extends BasicCollector {
                             stockCode.exchange().name(), stockCode.code(), stockCode.name(),
                             timestampToLocalDate(beginFromTs));
 
-                    collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), beginFromTs);
+                    collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), nowTs);
                 } else {
                     log.info("[{}/{}] To collect history of {}{} {}", alreadyCollected, totalCnt,
                             stockCode.exchange().name(), stockCode.code(), stockCode.name());
@@ -143,8 +148,8 @@ public class StockKLineCollector extends BasicCollector {
     }
 
     private static String timestampToLocalDate(Long timestamp) {
-       return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), SHANGHAI)
-                           .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), SHANGHAI)
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     private Long collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
