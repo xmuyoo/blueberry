@@ -17,7 +17,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <lombok.version>1.18.8</lombok.version>
-        <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
+        <spring-boot.version>2.5.12</spring-boot.version>
         <postgresql.client.version>42.2.2</postgresql.client.version>
         <guava.version>25.1-jre</guava.version>
         <druid.version>1.1.10</druid.version>
