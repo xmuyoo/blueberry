@@ -2,9 +2,6 @@ package org.xmuyoo.blueberry.collect.collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
@@ -20,6 +17,8 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.xmuyoo.blueberry.collect.collectors.data.source.RemoteDataSource;
+import org.xmuyoo.blueberry.collect.collectors.data.source.RemoteDataSourceFactory;
 import org.xmuyoo.blueberry.collect.domains.ConvertibleBondCode;
 import org.xmuyoo.blueberry.collect.domains.ConvertibleBondHistory;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
@@ -28,7 +27,7 @@ import org.xmuyoo.blueberry.collect.http.Request;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
-public class ConvertibleBondHistoryCollector extends BasicCollector {
+public class ConvertibleBondHistoryCollector extends BasicCollector<ConvertibleBondHistory> {
 
     private static final String CONVERTIBLE_BOND_HISTORY = "convertible_bond_history";
 
@@ -37,39 +36,17 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
     private static final ZoneOffset TIME_ZONE_OFFSET = ZoneOffset.ofHours(8);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    private static final Map<String, String> JISILU_HEADERS = ImmutableMap.<String, String>builder()
-            .put("Host", "www.jisilu.cn")
-            .put("Pragma", "no-cache")
-            .put("sec-ch-ua", "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Google Chrome\";v=\"96\"")
-            .put("sec-ch-ua-mobile", "?0")
-            .put("sec-ch-ua-platform", "macOS")
-            .put("Sec-Fetch-Dest", "document")
-            .put("Sec-Fetch-Mode", "navigate")
-            .put("Sec-Fetch-Site", "none")
-            .put("Sec-Fetch-User", "?1")
-            .put("Upgrade-Insecure-Requests", "1")
-            .put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36")
-            .put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-            .put("Connection", "keep-alive")
-            .put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-            .put("Accept-Encoding", "gzip, deflate, br")
-            .put("Accept-Language", "zh-CN,zh;q=0.9")
-            .put("Cache-Control", "no-cache")
-            .build();
-
     private final HttpClient http;
-    private final String cookie;
+    private final RemoteDataSource jisilu;
 
     public ConvertibleBondHistoryCollector(PgClient pgClient, HttpClient httpClient) {
-        super(CONVERTIBLE_BOND_HISTORY, pgClient);
+        super(CONVERTIBLE_BOND_HISTORY, pgClient, ConvertibleBondHistory.class);
         this.http = httpClient;
-
-        Config jisiluCfg = ConfigFactory.load("jisilu");
-        this.cookie = jisiluCfg.getString("cookie");
+        this.jisilu = RemoteDataSourceFactory.getDataSource(RemoteDataSourceFactory.DataSourceType.Jisilu);
     }
 
     @Override
-    protected boolean isAvailable() {
+    protected boolean needCreateEntityTable() {
         return true;
     }
 
@@ -87,8 +64,8 @@ public class ConvertibleBondHistoryCollector extends BasicCollector {
             Request request = new Request();
             request.url(url);
             request.method(HttpMethod.GET);
-            Map<String, String> headers = new HashMap<>(JISILU_HEADERS);
-            headers.put("Cookie", cookie);
+            Map<String, String> headers = new HashMap<>(jisilu.getRemoteHTTPRequestHeaders());
+            headers.put("Cookie", jisilu.getRemoteHTTPRequestCookie());
             request.headers(headers);
 
             try {

@@ -1,32 +1,45 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.xmuyoo.blueberry.collect.Collector;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
+import org.xmuyoo.blueberry.collect.storage.Persistent;
 import org.xmuyoo.blueberry.collect.storage.PersistentProperty;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
+import org.xmuyoo.blueberry.collect.storage.UniqueConstraint;
 import org.xmuyoo.blueberry.collect.storage.ValueType;
 
 @Slf4j
-public abstract class BasicCollector implements Collector {
+public abstract class BasicCollector<T> implements Collector {
 
     protected String collectorName;
     protected volatile boolean isRunning = true;
     protected volatile String name;
 
     protected PgClient storage;
+    private Class<T> entityClz;
 
     public BasicCollector(String collectorName, PgClient storage) {
         this.collectorName = collectorName;
         this.storage = storage;
+    }
+
+    public BasicCollector(String collectorName, PgClient storage, Class<T> entityClz) {
+        this.collectorName = collectorName;
+        this.storage = storage;
+        this.entityClz = entityClz;
     }
 
     @Override
@@ -36,14 +49,15 @@ public abstract class BasicCollector implements Collector {
 
     @Override
     public String name() {
-        if (StringUtils.isEmpty(this.name))
+        if (StringUtils.isEmpty(this.name)) {
             this.name = this.getClass().getSimpleName();
+        }
 
         return this.name;
     }
 
     @Override
-    public void start() {
+    public void init() {
     }
 
     @Override
@@ -54,22 +68,19 @@ public abstract class BasicCollector implements Collector {
     public void run() {
         log.info("Start running collector: {}", this.collectorName);
         registerDataSchema();
-        start();
+        createEntityTableIfNotExists();
+        init();
 
-        if (isAvailable()) {
-            try {
-                collect();
-            } catch (Throwable t) {
-                log.error(String.format("Error in collector: [%s:%s]", name(),
-                        collectorName), t);
-            }
+        try {
+            collect();
+        } catch (Throwable t) {
+            log.error(String.format("Error in collector: [%s:%s]", name(),
+                    collectorName), t);
         }
 
         shutdown();
         log.info("Collecting completed. Shutdown {}", this.collectorName);
     }
-
-    protected abstract boolean isAvailable();
 
     protected abstract boolean collect();
 
@@ -87,6 +98,7 @@ public abstract class BasicCollector implements Collector {
     }
 
     private void registerDataSchema() {
+        createEntityTable(DataSchema.class);
         List<DataSchema> dataSchemaList = getDataSchemaList();
         try {
             storage.saveOrUpdate(dataSchemaList, DataSchema.class);
@@ -96,24 +108,71 @@ public abstract class BasicCollector implements Collector {
         }
     }
 
-    protected DataSchema textOf(String name, String description) {
-        return new DataSchema(collectorName, name, ValueType.Text, description, collectorName);
+    private void createEntityTableIfNotExists() {
+        if (!needCreateEntityTable() || entityClz == null) {
+            return;
+        }
+
+        createEntityTable(entityClz);
     }
 
-    protected DataSchema numberOf(String name, String description) {
-        return new DataSchema(collectorName, name, ValueType.Number, description, collectorName);
+    @SneakyThrows
+    private <ENTITY> void createEntityTable(Class<ENTITY> entityClz) {
+        StringBuilder builder = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
+        Persistent persistent = entityClz.getAnnotation(Persistent.class);
+        String tableName = persistent.name();
+        builder.append(tableName).append("(\n");
+
+        List<String> columnDefinitionList = new ArrayList<>();
+        List<String> uniqueColumns = new ArrayList<>();
+        ImmutableMap<ValueType, String> typeMapping = this.storage.getStorgeTypeMapping();
+        for (Field field : entityClz.getDeclaredFields()) {
+            PersistentProperty property = field.getAnnotation(PersistentProperty.class);
+            if (null == property) {
+                continue;
+            }
+
+            String columnName = property.name();
+            ValueType valueType = property.valueType();
+            String description = property.description();
+
+            String columnDefinition = "-- " + description + "\n";
+            columnDefinition += String.format("%s %s", columnName, typeMapping.get(valueType));
+            columnDefinitionList.add(columnDefinition);
+
+            if (property.isUnique()) {
+                uniqueColumns.add(columnName);
+            }
+        }
+
+        String createSql = builder.append(String.join(",", columnDefinitionList)).append(")").toString();
+        this.storage.execute(createSql);
+
+        String uniqueIdxDefinitionFmt = "CREATE UNIQUE INDEX IF NOT EXISTS %s__%s_idx ON %s(%s)";
+        for (String uniqueCol : uniqueColumns) {
+            String createUniqueIdxSql = String.format(uniqueIdxDefinitionFmt,
+                    tableName, uniqueCol, tableName, uniqueCol);
+            this.storage.execute(createUniqueIdxSql);
+        }
+
+        UniqueConstraint[] uniqueConstraints = persistent.uniqueConstraints();
+        if (null != uniqueConstraints && uniqueConstraints.length > 0) {
+            for (UniqueConstraint constraint : uniqueConstraints) {
+                String[] cols = constraint.value();
+                if (cols != null && cols.length > 0) {
+                    List<String> multiColsUniqueIndex = new ArrayList<>(Arrays.asList(cols));
+                    String multiIndexDefinition = String.format(uniqueIdxDefinitionFmt,
+                            tableName, String.join("_", multiColsUniqueIndex),
+                            tableName, String.join(",", multiColsUniqueIndex));
+
+                    this.storage.execute(multiIndexDefinition);
+                }
+            }
+        }
     }
 
-    protected DataSchema datetimeOf(String name, String description) {
-        return new DataSchema(collectorName, name, ValueType.Datetime, description, collectorName);
-    }
-
-    protected DataSchema booleanOf(String name, String description) {
-        return new DataSchema(collectorName, name, ValueType.Boolean, description, collectorName);
-    }
-
-    protected DataSchema jsonOf(String name, String description) {
-        return new DataSchema(collectorName, name, ValueType.Json, description, collectorName);
+    protected boolean needCreateEntityTable() {
+        return false;
     }
 
     protected List<DataSchema> toSchemaList(Class<?> clz) {
@@ -151,14 +210,25 @@ public abstract class BasicCollector implements Collector {
 
             final ValueType valueType = persistentProperty.valueType();
             final Class<?> valueClz = field.getType();
-            if (ValueType.Number.equals(valueType)) {
-                if (Double.class.equals(valueClz)) {
+            switch (valueType) {
+                case Double:
                     field.set(entity, Double.parseDouble(value.toString()));
-                } else if (Long.class.equals(valueClz)) {
+                    break;
+                case BigInt:
                     field.set(entity, Long.parseLong(value.toString()));
-                }
-            } else {
-                field.set(entity, value);
+                    break;
+                case Text:
+                    field.set(entity, value);
+                    break;
+                default:
+                    if (Double.class.equals(valueClz)) {
+                        field.set(entity, Double.parseDouble(value.toString()));
+                    } else if (Long.class.equals(valueClz)) {
+                        field.set(entity, Long.parseLong(value.toString()));
+                    } else {
+                        field.set(entity, value);
+                    }
+                    break;
             }
         }
 

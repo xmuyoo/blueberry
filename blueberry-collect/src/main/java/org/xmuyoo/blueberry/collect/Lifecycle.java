@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public interface Lifecycle {
 
-    void start();
+    void init();
 
     void shutdown();
 

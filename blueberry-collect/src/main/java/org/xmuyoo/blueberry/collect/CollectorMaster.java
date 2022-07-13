@@ -45,13 +45,13 @@ public class CollectorMaster implements Lifecycle {
     }
 
     @Override
-    public void start() {
+    public void init() {
         loadCollectors();
         for (Map.Entry<String, Collector> entry : collectors.entrySet()) {
             Collector collector = entry.getValue();
 
             log.info("Try to run {}", collector.name());
-            collector.start();
+            collector.init();
             collectorExecutors.submit(collector::run);
         }
 

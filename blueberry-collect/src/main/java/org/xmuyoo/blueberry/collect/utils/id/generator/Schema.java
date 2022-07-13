@@ -1,4 +1,4 @@
-package org.xmuyoo.blueberry.collect.utils.id;
+package org.xmuyoo.blueberry.collect.utils.id.generator;
 
 public class Schema {
 

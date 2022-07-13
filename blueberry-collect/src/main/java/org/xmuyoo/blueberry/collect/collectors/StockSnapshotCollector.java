@@ -23,7 +23,7 @@ import org.xmuyoo.blueberry.collect.storage.PgClient;
 import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Slf4j
-public class StockSnapshotCollector extends BasicCollector {
+public class StockSnapshotCollector extends BasicCollector<StockSnapshot> {
 
     private static final String STOCK_SNAPSHOT = "stock_snapshot";
 
@@ -32,7 +32,7 @@ public class StockSnapshotCollector extends BasicCollector {
     private String cookie;
 
     public StockSnapshotCollector(PgClient storage, HttpClient httpClient) {
-        super(STOCK_SNAPSHOT, storage);
+        super(STOCK_SNAPSHOT, storage, StockSnapshot.class);
         this.http = httpClient;
 
         Config stockSnapshotConfig = ConfigFactory.load("stock-snapshot");
@@ -43,7 +43,7 @@ public class StockSnapshotCollector extends BasicCollector {
     }
 
     @Override
-    protected boolean isAvailable() {
+    protected boolean needCreateEntityTable() {
         return true;
     }
 
@@ -67,11 +67,19 @@ public class StockSnapshotCollector extends BasicCollector {
 
             StockSnapshot stockSnapshot = http.sync(request, response -> {
                 try {
-                    XqStockSnapshotResponse resp =
-                            Utils.deserialize(response.body().bytes(), XqStockSnapshotResponse.class);
+                    if (null != response.body()) {
+                        byte[] content = response.body().bytes();
+                        if (content.length == 0) {
+                            return null;
+                        }
 
-                    Data data = resp.data();
-                    return mapToEntity(data.quote(), StockSnapshot.class);
+                        XqStockSnapshotResponse resp =
+                                Utils.deserialize(content, XqStockSnapshotResponse.class);
+                        Data data = resp.data();
+                        return mapToEntity(data.quote(), StockSnapshot.class);
+                    } else {
+                        return null;
+                    }
                 } catch (Exception e) {
                     log.warn("Failed to parse response data for {}: ", stockCode, e);
                     return null;

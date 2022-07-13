@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -20,7 +19,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.xmuyoo.blueberry.collect.domains.ConvertibleBondCode;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.domains.StockCode;
 import org.xmuyoo.blueberry.collect.domains.StockKLine;
@@ -29,7 +27,7 @@ import org.xmuyoo.blueberry.collect.http.Request;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
-public class StockKLineCollector extends BasicCollector {
+public class StockKLineCollector extends BasicCollector<StockKLine> {
 
     private static final String STOCK_K_LINE = "stock_k_line";
     private static final String K_LINE_URL =
@@ -48,7 +46,7 @@ public class StockKLineCollector extends BasicCollector {
     final private Long defaultBeginFromTs;
 
     public StockKLineCollector(PgClient storage, HttpClient http) {
-        super(STOCK_K_LINE, storage);
+        super(STOCK_K_LINE, storage, StockKLine.class);
         this.http = http;
 
         Config kLineCfg = ConfigFactory.load("stock_k_line");
@@ -59,13 +57,13 @@ public class StockKLineCollector extends BasicCollector {
     }
 
     @Override
-    protected boolean isAvailable() {
-        return true;
+    protected List<DataSchema> getDataSchemaList() {
+        return toSchemaList(StockKLine.class);
     }
 
     @Override
-    protected List<DataSchema> getDataSchemaList() {
-        return toSchemaList(StockKLine.class);
+    protected boolean needCreateEntityTable() {
+        return true;
     }
 
     @SneakyThrows

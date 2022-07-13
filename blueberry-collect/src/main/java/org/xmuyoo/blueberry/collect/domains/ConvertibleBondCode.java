@@ -34,25 +34,25 @@ public class ConvertibleBondCode {
     @PersistentProperty(name = "bond_rating", valueType = ValueType.Text, description = "可转债评级")
     private String bondRating;
 
-    @PersistentProperty(name = "conversion_price", valueType = ValueType.Number, description = "转股价格", updateWhenConflict = true)
+    @PersistentProperty(name = "conversion_price", valueType = ValueType.Double, description = "转股价格", updateWhenConflict = true)
     private Double conversionPrice;
 
-    @PersistentProperty(name = "conversion_value", valueType = ValueType.Number, description = "转股价值", updateWhenConflict = true)
+    @PersistentProperty(name = "conversion_value", valueType = ValueType.Double, description = "转股价值", updateWhenConflict = true)
     private Double conversionValue;
 
-    @PersistentProperty(name = "ytm_rt", valueType = ValueType.Number, description = "到期税前收益")
+    @PersistentProperty(name = "ytm_rt", valueType = ValueType.Double, description = "到期税前收益")
     private Double ytmRt;
 
-    @PersistentProperty(name = "convert_amt_ratio", valueType = ValueType.Number, description = "转债占比", updateWhenConflict = true)
+    @PersistentProperty(name = "convert_amt_ratio", valueType = ValueType.Double, description = "转债占比", updateWhenConflict = true)
     private Double convertAmtRatio;
 
-    @PersistentProperty(name = "adj_cnt", valueType = ValueType.Number, description = "下修转股价次数", updateWhenConflict = true)
+    @PersistentProperty(name = "adj_cnt", valueType = ValueType.BigInt, description = "下修转股价次数", updateWhenConflict = true)
     private Double adjCnt;
 
-    @PersistentProperty(name = "resale_trigger_price", valueType = ValueType.Number, description = "回售触发价", updateWhenConflict = true)
+    @PersistentProperty(name = "resale_trigger_price", valueType = ValueType.Double, description = "回售触发价", updateWhenConflict = true)
     private Double resaleTriggerPrice;
 
-    @PersistentProperty(name = "frt_price", valueType = ValueType.Number, description = "Strong Redemption Trigger Price，强赎触发价", updateWhenConflict = true)
+    @PersistentProperty(name = "frt_price", valueType = ValueType.Double, description = "Strong Redemption Trigger Price，强赎触发价", updateWhenConflict = true)
     private Double forceRedemptionTriggerPrice;
 
     @PersistentProperty(name = "expire_date", valueType = ValueType.Text, description = "到期时间")
@@ -61,10 +61,10 @@ public class ConvertibleBondCode {
     @PersistentProperty(name = "delisted", valueType = ValueType.Boolean, description = "是否退市", updateWhenConflict = true)
     private Boolean delisted;
 
-    @PersistentProperty(name = "last_price", valueType = ValueType.Number, description = "最后交易价格，针对已退市转债")
+    @PersistentProperty(name = "last_price", valueType = ValueType.Double, description = "最后交易价格，针对已退市转债")
     private Double lastPrice;
 
-    @PersistentProperty(name = "lasting_years", valueType = ValueType.Number, description = "存续年限")
+    @PersistentProperty(name = "lasting_years", valueType = ValueType.Double, description = "存续年限")
     private Double lastingYears;
 
     @PersistentProperty(name = "delist_reason", valueType = ValueType.Text, description = "退市原因")

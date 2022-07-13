@@ -2,7 +2,8 @@ package org.xmuyoo.blueberry.collect.storage;
 
 public enum ValueType {
     Text,
-    Number,
+    BigInt,
+    Double,
     Datetime,
     Json,
     Boolean

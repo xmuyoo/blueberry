@@ -23,7 +23,7 @@ import org.xmuyoo.blueberry.collect.http.Request;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
-public class ConvertibleBondCodeCollector extends BasicCollector {
+public class ConvertibleBondCodeCollector extends BasicCollector<ConvertibleBondCode> {
 
     private static final String CONVERTIBLE_BOND_CODE = "convertible_bond_code";
     private static final String ACTIVE_PARAMETERS_BODY = Joiner.on("&").join(
@@ -47,17 +47,17 @@ public class ConvertibleBondCodeCollector extends BasicCollector {
     private final HttpClient http;
 
     public ConvertibleBondCodeCollector(PgClient storage, HttpClient http) {
-        super(CONVERTIBLE_BOND_CODE, storage);
+        super(CONVERTIBLE_BOND_CODE, storage, ConvertibleBondCode.class);
         this.http = http;
         this.delistedUrl = "http://www.jisilu.cn/data/cbnew/delisted/?___jsl=LST___t=" + System.currentTimeMillis();
         this.activeUrl = "https://www.jisilu.cn/data/cbnew/cb_list_new/?___jsl=LST___t=" + System.currentTimeMillis();
 
-        Config config = ConfigFactory.load("convert-bond");
+        Config config = ConfigFactory.load("jisilu");
         this.cookie = config.getString("cookie");
     }
 
     @Override
-    protected boolean isAvailable() {
+    protected boolean needCreateEntityTable() {
         return true;
     }
 

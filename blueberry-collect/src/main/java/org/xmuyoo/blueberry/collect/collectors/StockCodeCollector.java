@@ -1,28 +1,26 @@
 package org.xmuyoo.blueberry.collect.collectors;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.xmuyoo.blueberry.collect.collectors.data.source.TShareData;
 import org.xmuyoo.blueberry.collect.domains.DataSchema;
 import org.xmuyoo.blueberry.collect.domains.StockCode;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
-import org.xmuyoo.blueberry.collect.storage.ValueType;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
-public class StockCodeCollector extends BasicCollector {
+public class StockCodeCollector extends BasicCollector<StockCode> {
 
     private final TShareData tShareData;
 
     public StockCodeCollector(PgClient meta, HttpClient http) {
-        super("stock-code", meta);
+        super("stock-code", meta, StockCode.class);
 
         this.tShareData = new TShareData(http);
     }
 
     @Override
-    protected boolean isAvailable() {
+    protected boolean needCreateEntityTable() {
         return true;
     }
 

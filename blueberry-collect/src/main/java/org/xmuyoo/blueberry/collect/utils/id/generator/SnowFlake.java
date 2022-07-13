@@ -1,4 +1,4 @@
-package org.xmuyoo.blueberry.collect.utils.id;
+package org.xmuyoo.blueberry.collect.utils.id.generator;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;

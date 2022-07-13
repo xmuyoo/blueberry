@@ -216,7 +216,7 @@ public class HttpClient implements Lifecycle {
     }
 
     @Override
-    public void start() {
+    public void init() {
         disruptor.start();
     }
 

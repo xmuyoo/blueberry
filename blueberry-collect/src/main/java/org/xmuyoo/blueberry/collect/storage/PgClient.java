@@ -3,6 +3,7 @@ package org.xmuyoo.blueberry.collect.storage;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,6 +32,16 @@ import org.xmuyoo.blueberry.collect.utils.Utils;
 
 @Slf4j
 public class PgClient implements Lifecycle {
+
+    private static final ImmutableMap<ValueType, String> VALUE_TYPE_TO_COLUMN_TYPE = ImmutableMap
+            .<ValueType, String>builder()
+            .put(ValueType.Text, "text")
+            .put(ValueType.BigInt, "bigint")
+            .put(ValueType.Double, "decimal(16, 2)")
+            .put(ValueType.Datetime, "timestamp")
+            .put(ValueType.Boolean, "boolean")
+            .put(ValueType.Json, "json")
+            .build();
 
     private static final String INSERT_IGNORE_DATA_FORMAT =
             "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT";
@@ -61,7 +72,7 @@ public class PgClient implements Lifecycle {
     }
 
     @Override
-    public void start() {
+    public void init() {
 
     }
 
@@ -72,6 +83,10 @@ public class PgClient implements Lifecycle {
         }
     }
 
+    public ImmutableMap<ValueType, String> getStorgeTypeMapping() {
+        return VALUE_TYPE_TO_COLUMN_TYPE;
+    }
+
     public <T> void saveIgnoreDuplicated(@NonNull List<T> dataList, Class<T> clz) {
         saveOrUpdate(dataList, clz, false);
     }
@@ -80,7 +95,7 @@ public class PgClient implements Lifecycle {
         saveOrUpdate(dataList, clz, true);
     }
 
-    private  <T> boolean saveOrUpdate(@NonNull List<T> dataList, Class<T> clz, boolean updateWhenConflict) {
+    private <T> boolean saveOrUpdate(@NonNull List<T> dataList, Class<T> clz, boolean updateWhenConflict) {
         if (dataList.isEmpty()) {
             log.warn("Data is empty. Ignore saving.");
             return true;
@@ -230,7 +245,7 @@ public class PgClient implements Lifecycle {
                 }
 
                 int j = fieldNames.size() + 1;
-                for (FieldProperty fieldProperty: updateOnConflictColumns) {
+                for (FieldProperty fieldProperty : updateOnConflictColumns) {
                     String fieldName = fieldProperty.field().getName();
                     Field field = data.getClass().getDeclaredField(fieldName);
                     setPreparedValue(field, fieldProperty.property(), data, stmt, j);

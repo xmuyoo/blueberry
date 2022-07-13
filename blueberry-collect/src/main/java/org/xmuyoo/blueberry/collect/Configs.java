@@ -85,4 +85,8 @@ public class Configs {
     public boolean runConvertibleBondHistory() {
         return this.tasksSwitchConfig.getBoolean("convertible.bond.history");
     }
+
+    public boolean runFinancialIndicators() {
+        return this.tasksSwitchConfig.getBoolean("financial.indicators");
+    }
 }

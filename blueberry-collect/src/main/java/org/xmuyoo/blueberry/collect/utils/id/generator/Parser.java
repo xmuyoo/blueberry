@@ -1,4 +1,4 @@
-package org.xmuyoo.blueberry.collect.utils.id;
+package org.xmuyoo.blueberry.collect.utils.id.generator;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
