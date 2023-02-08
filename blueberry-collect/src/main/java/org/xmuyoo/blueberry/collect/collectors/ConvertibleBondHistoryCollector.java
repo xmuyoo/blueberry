@@ -38,11 +38,13 @@ public class ConvertibleBondHistoryCollector extends BasicCollector<ConvertibleB
 
     private final HttpClient http;
     private final RemoteDataSource jisilu;
+    private final int collectIntervalMs;
 
     public ConvertibleBondHistoryCollector(PgClient pgClient, HttpClient httpClient) {
         super(CONVERTIBLE_BOND_HISTORY, pgClient, ConvertibleBondHistory.class);
         this.http = httpClient;
         this.jisilu = RemoteDataSourceFactory.getDataSource(RemoteDataSourceFactory.DataSourceType.Jisilu);
+        this.collectIntervalMs = jisilu.getCollectIntervalMilliseconds();
     }
 
     @Override
@@ -104,7 +106,7 @@ public class ConvertibleBondHistoryCollector extends BasicCollector<ConvertibleB
             } catch (Exception e) {
                 log.warn("Failed to collect convertible bond history for {}", convertibleBondCode.name(), e);
             }
-            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.MILLISECONDS.sleep(this.collectIntervalMs);
             idx++;
         }
 

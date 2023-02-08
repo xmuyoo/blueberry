@@ -28,6 +28,8 @@ public class Jisilu implements RemoteDataSource {
             .put("Cache-Control", "no-cache")
             .build();
 
+    private static final int DEFAULT_COLLECT_INTERVAL_MS = 1000;
+
     private final Config config;
 
     Jisilu() {
@@ -42,5 +44,14 @@ public class Jisilu implements RemoteDataSource {
     @Override
     public String getRemoteHTTPRequestCookie() {
         return config.getString("cookie");
+    }
+
+    @Override
+    public int getCollectIntervalMilliseconds() {
+        if (config.hasPath("collect.interval.ms")) {
+            return config.getInt("collect.interval.ms");
+        } else {
+            return DEFAULT_COLLECT_INTERVAL_MS;
+        }
     }
 }

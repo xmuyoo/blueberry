@@ -7,4 +7,6 @@ public interface RemoteDataSource {
     Map<String, String> getRemoteHTTPRequestHeaders();
 
     String getRemoteHTTPRequestCookie();
+
+    int getCollectIntervalMilliseconds();
 }
