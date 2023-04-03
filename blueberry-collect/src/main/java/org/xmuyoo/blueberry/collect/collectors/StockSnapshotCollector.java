@@ -76,6 +76,10 @@ public class StockSnapshotCollector extends BasicCollector<StockSnapshot> {
                         XqStockSnapshotResponse resp =
                                 Utils.deserialize(content, XqStockSnapshotResponse.class);
                         Data data = resp.data();
+                        if (null == data.quote()) {
+                            log.warn("Snapshot data is empty for: {}", request.url());
+                            return null;
+                        }
                         return mapToEntity(data.quote(), StockSnapshot.class);
                     } else {
                         return null;

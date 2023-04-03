@@ -37,7 +37,7 @@ public class PgClient implements Lifecycle {
             .<ValueType, String>builder()
             .put(ValueType.Text, "text")
             .put(ValueType.BigInt, "bigint")
-            .put(ValueType.Double, "decimal(16, 2)")
+            .put(ValueType.Double, "double precision")
             .put(ValueType.Datetime, "timestamp")
             .put(ValueType.Boolean, "boolean")
             .put(ValueType.Json, "json")

@@ -43,6 +43,9 @@ public class StockSnapshot {
     @PersistentProperty(name = "last_close", valueType = ValueType.Double, updateWhenConflict = true, description = "昨日收盘价")
     private Double lastClose;
 
+    @PersistentProperty(name = "current", valueType = ValueType.Double, updateWhenConflict = true, description = "当前价格")
+    private Double current;
+
     @PersistentProperty(name = "amount", valueType = ValueType.Double, updateWhenConflict = true, description = "成交额")
     private Double amount;
 

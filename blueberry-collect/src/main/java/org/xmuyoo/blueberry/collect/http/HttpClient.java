@@ -171,8 +171,8 @@ public class HttpClient implements Lifecycle {
         requestsQueueBuffer.publishEvent(requestTranslator, request, handler);
     }
 
-    public <I, O> O sync(Request req, Function<I, O> applier, Class<I> clz) throws Exception {
-        I data = sync(req, resp -> getResponseData(resp, clz));
+    public <I, O> O sync(Request req, Function<I, O> applier, Class<I> inputClz) throws Exception {
+        I data = sync(req, resp -> getResponseData(resp, inputClz));
         if (null == data) {
             return null;
         }
