@@ -24,7 +24,7 @@
         <common-lang3.version>3.8.1</common-lang3.version>
         <okhttp.version>4.1.0</okhttp.version>
         <guava-retrying.version>2.0.0</guava-retrying.version>
-        <postgresql.client.version>42.3.3</postgresql.client.version>
+        <postgresql.client.version>42.3.8</postgresql.client.version>
         <druid.version>1.1.10</druid.version>
         <jackson.version>2.13.3</jackson.version>
         <pulsar.version>2.4.0</pulsar.version>
