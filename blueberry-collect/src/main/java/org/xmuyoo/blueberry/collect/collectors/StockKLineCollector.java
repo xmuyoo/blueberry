@@ -74,7 +74,7 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
             "    hold_ratio_hk Float64,\n" +
             "    net_volume_hk Float64\n" +
             ") ENGINE = ReplacingMergeTree()\n" +
-            "PARTITION BY (code, record_date)\n" +
+            "PARTITION BY (code)\n" +
             "ORDER BY (code, record_time)";
 
     final private ChClient kLineStorage;
