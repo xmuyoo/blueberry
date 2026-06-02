@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Apache HttpClient5 wire/headers 日志太吵，设为 WARN -->
+    <logger name="org.apache.hc.client5.http.wire" level="WARN"/>
+    <logger name="org.apache.hc.client5.http.headers" level="WARN"/>
+
+    <!-- ClickHouse 客户端内部实现细节，静默 -->
+    <logger name="com.clickhouse.client.http" level="WARN"/>
+
+    <!-- 默认日志级别 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

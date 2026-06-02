@@ -125,7 +125,7 @@ public abstract class BasicCollector<T> implements Collector {
 
         List<String> columnDefinitionList = new ArrayList<>();
         List<String> uniqueColumns = new ArrayList<>();
-        ImmutableMap<ValueType, String> typeMapping = this.storage.getStorgeTypeMapping();
+        ImmutableMap<ValueType, String> typeMapping = this.storage.getStorageTypeMapping();
         for (Field field : entityClz.getDeclaredFields()) {
             PersistentProperty property = field.getAnnotation(PersistentProperty.class);
             if (null == property) {

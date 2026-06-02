@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
+import org.xmuyoo.blueberry.collect.storage.ChClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 import javax.annotation.Resource;
@@ -32,12 +33,15 @@ public class CollectorMaster implements Lifecycle {
     private HttpClient httpClient;
     private PgClient metaBase;
     private PgClient dataWarehouse;
+    private ChClient clickhouse;
     private AtomicBoolean loaded = new AtomicBoolean(false);
 
-    public CollectorMaster(HttpClient httpClient, PgClient metaBase, PgClient dataWarehouse) {
+    public CollectorMaster(HttpClient httpClient, PgClient metaBase, PgClient dataWarehouse,
+                           ChClient clickhouse) {
         this.httpClient = httpClient;
         this.metaBase = metaBase;
         this.dataWarehouse = dataWarehouse;
+        this.clickhouse = clickhouse;
         collectors = new HashMap<>();
         ThreadFactory factory =
                 new ThreadFactoryBuilder().setNameFormat("collector-mgr-%s").build();
@@ -77,6 +81,7 @@ public class CollectorMaster implements Lifecycle {
 
         dataWarehouse.shutdown();
         metaBase.shutdown();
+        clickhouse.shutdown();
     }
 
     private void loadCollectors() {
@@ -111,6 +116,9 @@ public class CollectorMaster implements Lifecycle {
                     if (fieldClassName.equals(HttpClient.class.getSimpleName())) {
                         field.setAccessible(true);
                         field.set(collector, httpClient);
+                    } else if (fieldClassName.equals(ChClient.class.getSimpleName())) {
+                        field.setAccessible(true);
+                        field.set(collector, clickhouse);
                     } else if (fieldClassName.equals(PgClient.class.getSimpleName())) {
                         field.setAccessible(true);
                         Resource resource = field.getAnnotation(Resource.class);

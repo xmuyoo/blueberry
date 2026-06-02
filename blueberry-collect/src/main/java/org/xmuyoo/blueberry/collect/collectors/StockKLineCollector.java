@@ -26,6 +26,7 @@ import org.xmuyoo.blueberry.collect.domains.StockCode;
 import org.xmuyoo.blueberry.collect.domains.StockKLine;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
 import org.xmuyoo.blueberry.collect.http.Request;
+import org.xmuyoo.blueberry.collect.storage.ChClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
@@ -43,13 +44,48 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Long ONE_DAY_MS = 86400L * 1000;
 
+    private static final String CREATE_STOCK_K_LINE_CLICKHOUSE_SQL =
+            "CREATE TABLE IF NOT EXISTS stock_k_line (\n" +
+            "    code String,\n" +
+            "    name String,\n" +
+            "    record_time Int64,\n" +
+            "    record_date Date MATERIALIZED toDate(toDateTime(record_time / 1000, 'Asia/Shanghai')),\n" +
+            "    volume Int64,\n" +
+            "    open Float64,\n" +
+            "    close Float64,\n" +
+            "    high Float64,\n" +
+            "    low Float64,\n" +
+            "    chg Float64,\n" +
+            "    percent Float64,\n" +
+            "    turn_overrate Float64,\n" +
+            "    amount Float64,\n" +
+            "    volume_post Int64,\n" +
+            "    amount_post Float64,\n" +
+            "    pe Float64,\n" +
+            "    pb Float64,\n" +
+            "    ps Float64,\n" +
+            "    pcf Float64,\n" +
+            "    market_capital Int64,\n" +
+            "    balance Float64,\n" +
+            "    hold_volume_cn Float64,\n" +
+            "    hold_ratio_cn Float64,\n" +
+            "    net_volume_cn Float64,\n" +
+            "    hold_volume_hk Float64,\n" +
+            "    hold_ratio_hk Float64,\n" +
+            "    net_volume_hk Float64\n" +
+            ") ENGINE = ReplacingMergeTree()\n" +
+            "PARTITION BY (code, record_date)\n" +
+            "ORDER BY (code, record_time)";
+
+    final private ChClient kLineStorage;
     final private HttpClient http;
     final private String xueqiuCookie;
     final private Long defaultBeginFromTs;
 
-    public StockKLineCollector(PgClient storage, HttpClient http) {
-        super(STOCK_K_LINE, storage, StockKLine.class);
+    public StockKLineCollector(PgClient stockCodeStorage, ChClient kLineStorage, HttpClient http) {
+        super(STOCK_K_LINE, stockCodeStorage, StockKLine.class);
         this.http = http;
+        this.kLineStorage = kLineStorage;
 
         Config kLineCfg = ConfigFactory.load("stock_k_line");
         this.defaultBeginFromTs = kLineCfg.getLong("default.begin.from.ts");
@@ -65,7 +101,15 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
 
     @Override
     protected boolean needCreateEntityTable() {
-        return true;
+        return false;
+    }
+
+    @Override
+    public void init() {
+        // Create ClickHouse table with ReplacingMergeTree engine
+        // PARTITION BY (code, record_date), ORDER BY (code, record_time)
+        kLineStorage.execute(CREATE_STOCK_K_LINE_CLICKHOUSE_SQL);
+        log.info("ClickHouse stock_k_line table ensured.");
     }
 
     @SneakyThrows
@@ -117,7 +161,7 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
     }
 
     private Long getLatestTime(StockCode code) throws Exception {
-        Long latestTs = storage.queryOne(
+        Long latestTs = kLineStorage.queryOne(
                 "SELECT MAX(record_time) FROM stock_k_line WHERE code = '" + code.code() + "'");
         if (null == latestTs) {
             latestTs = defaultBeginFromTs;
@@ -128,7 +172,7 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
 
     private Long getEarliestTime(StockCode stockCode) throws Exception {
         final String sql = "SELECT MIN(record_time) FROM stock_k_line WHERE code = '" + stockCode.code() + "'";
-        return storage.queryOne(sql);
+        return kLineStorage.queryOne(sql);
     }
 
     private Long collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
@@ -164,7 +208,7 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
             return null;
         }
 
-        storage.saveIgnoreDuplicated(kLineData, StockKLine.class);
+        kLineStorage.saveIgnoreDuplicated(kLineData, StockKLine.class);
         kLineData.sort(Comparator.comparingLong(StockKLine::recordTime));
 
         return kLineData.get(0).recordTime();

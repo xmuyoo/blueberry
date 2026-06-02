@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
+import org.xmuyoo.blueberry.collect.storage.ChClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Configuration
@@ -46,6 +47,12 @@ public class SpringConfig {
 
         PgClient dataWarehouse = new PgClient(warehouseDataSource);
 
-        return new CollectorMaster(httpClient, metaBase, dataWarehouse);
+        Config clickhouseConfig = Configs.clickhouseConfig();
+        ChClient clickhouse = new ChClient(
+                clickhouseConfig.getString("url"),
+                clickhouseConfig.getString("user"),
+                clickhouseConfig.getString("password"));
+
+        return new CollectorMaster(httpClient, metaBase, dataWarehouse, clickhouse);
     }
 }

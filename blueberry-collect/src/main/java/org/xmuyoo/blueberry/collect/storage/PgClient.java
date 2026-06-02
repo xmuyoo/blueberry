@@ -83,7 +83,7 @@ public class PgClient implements Lifecycle {
         }
     }
 
-    public ImmutableMap<ValueType, String> getStorgeTypeMapping() {
+    public ImmutableMap<ValueType, String> getStorageTypeMapping() {
         return VALUE_TYPE_TO_COLUMN_TYPE;
     }
 

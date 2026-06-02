@@ -10,6 +10,7 @@ import org.xmuyoo.blueberry.collect.collectors.StockCodeCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockKLineCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockSnapshotCollector;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
+import org.xmuyoo.blueberry.collect.storage.ChClient;
 import org.xmuyoo.blueberry.collect.storage.PgClient;
 
 @Slf4j
@@ -32,6 +33,12 @@ public class ManualRunner {
 
         PgClient storage = new PgClient(metaDataSource);
 
+        Config clickhouseConfig = Configs.clickhouseConfig();
+        String chUrl = clickhouseConfig.getString("url");
+        String chUser = clickhouseConfig.getString("user");
+        String chPassword = clickhouseConfig.getString("password");
+        ChClient chClient = new ChClient(chUrl, chUser, chPassword);
+
         Configs appConfigs = Configs.applicationConfig();
         // Stock code list
         if (appConfigs.runStockCodeList()) {
@@ -49,9 +56,9 @@ public class ManualRunner {
                     new ConvertibleBondCodeCollector(storage, httpClient);
             convertibleBondCodeCollector.run();
         }
-        // Stock K Line
+        // Stock K Line — uses ClickHouse for k-line data, PG for stock codes
         if (appConfigs.runStockKLine()) {
-            StockKLineCollector stockKLineCollector = new StockKLineCollector(storage, httpClient);
+            StockKLineCollector stockKLineCollector = new StockKLineCollector(storage, chClient, httpClient);
             stockKLineCollector.run();
         }
         // Convertible Bond History
@@ -67,6 +74,7 @@ public class ManualRunner {
             financialIndicatorsCollector.run();
         }
 
+        chClient.shutdown();
         storage.shutdown();
     }
 }

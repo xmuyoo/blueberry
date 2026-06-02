@@ -14,6 +14,7 @@ public class Configs {
     private static final String PUBLISHER_CONFIG = "pulsar";
     private static final String META_BASE_CONFIG = "metaBase";
     private static final String DATA_WAREHOUSE_CONFIG = "dataWarehouse";
+    private static final String CLICKHOUSE_CONFIG = "clickhouse";
     private static final String TASKS_SWITCH = "tasks.switch";
 
     private static final Config applicationConfig = ConfigFactory.load("application");
@@ -63,6 +64,11 @@ public class Configs {
 
     public static Config dataWarehouseConfig() {
         return applicationConfig.hasPath(DATA_WAREHOUSE_CONFIG) ? applicationConfig.getConfig(DATA_WAREHOUSE_CONFIG) :
+                ConfigFactory.empty();
+    }
+
+    public static Config clickhouseConfig() {
+        return applicationConfig.hasPath(CLICKHOUSE_CONFIG) ? applicationConfig.getConfig(CLICKHOUSE_CONFIG) :
                 ConfigFactory.empty();
     }
 
