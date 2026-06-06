@@ -95,4 +95,8 @@ public class Configs {
     public boolean runFinancialIndicators() {
         return this.tasksSwitchConfig.getBoolean("financial.indicators");
     }
+
+    public boolean runStockDividends() {
+        return this.tasksSwitchConfig.getBoolean("stock.dividends");
+    }
 }

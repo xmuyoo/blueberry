@@ -100,11 +100,6 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
     }
 
     @Override
-    protected boolean needCreateEntityTable() {
-        return false;
-    }
-
-    @Override
     public void init() {
         // Create ClickHouse table with ReplacingMergeTree engine
         // PARTITION BY (code, record_date), ORDER BY (code, record_time)

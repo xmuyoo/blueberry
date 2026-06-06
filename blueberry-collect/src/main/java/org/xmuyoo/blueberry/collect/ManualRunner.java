@@ -7,6 +7,7 @@ import org.xmuyoo.blueberry.collect.collectors.ConvertibleBondCodeCollector;
 import org.xmuyoo.blueberry.collect.collectors.ConvertibleBondHistoryCollector;
 import org.xmuyoo.blueberry.collect.collectors.FinancialIndicatorsCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockCodeCollector;
+import org.xmuyoo.blueberry.collect.collectors.StockDividendsCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockKLineCollector;
 import org.xmuyoo.blueberry.collect.collectors.StockSnapshotCollector;
 import org.xmuyoo.blueberry.collect.http.HttpClient;
@@ -60,6 +61,12 @@ public class ManualRunner {
         if (appConfigs.runStockKLine()) {
             StockKLineCollector stockKLineCollector = new StockKLineCollector(storage, chClient, httpClient);
             stockKLineCollector.run();
+        }
+        // Stock Dividends — uses ClickHouse for dividend history data
+        if (appConfigs.runStockDividends()) {
+            StockDividendsCollector dividendsCollector =
+                    new StockDividendsCollector(storage, chClient, httpClient);
+            dividendsCollector.run();
         }
         // Convertible Bond History
         if (appConfigs.runConvertibleBondHistory()) {
