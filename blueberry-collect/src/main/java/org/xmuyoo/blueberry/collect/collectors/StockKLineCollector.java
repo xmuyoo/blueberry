@@ -6,12 +6,6 @@ import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,10 +32,9 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
     private static final Map<String, String> K_LINE_URL_FIX_PARAMS = ImmutableMap.of(
             "indicator", "chg,kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance",
             "period", "day",
-            "type", "before",
-            "count", "-1000");
+            "type", "after",
+            "count", "2000");
 
-    private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
     private static final Long ONE_DAY_MS = 86400L * 1000;
 
     private static final String CREATE_STOCK_K_LINE_CLICKHOUSE_SQL =
@@ -110,68 +103,60 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
     @SneakyThrows
     @Override
     protected boolean collect() {
-        long nowTs = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("Asia/Shanghai"))
-                                  .withHour(0)
-                                  .withMinute(0)
-                                  .withSecond(0)
-                                  .toEpochSecond(ZoneOffset.ofHours(8)) * 1000;
-        // Collect stock k line data
         List<StockCode> stockCodeList = this.storage.queryList(
                 "SELECT code, name, exchange FROM stock_code", StockCode.class);
         int totalCnt = stockCodeList.size();
-        int alreadyCollected = 1;
+        int alreadyCollected = 0;
+
         for (StockCode stockCode : stockCodeList) {
             try {
-                Long earliestTs = getEarliestTime(stockCode);
-                while (earliestTs != null && earliestTs > defaultBeginFromTs) {
-                    earliestTs =
-                            collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), earliestTs);
-                    if (earliestTs == null) {
+                Long startTs = getLatestRecordTime(stockCode.code());
+                if (startTs == null) {
+                    log.info("Request {} from {}", stockCode.code(), defaultBeginFromTs);
+                    startTs = defaultBeginFromTs;
+                } else {
+                    startTs += ONE_DAY_MS;
+                }
+
+                while (true) {
+                    List<StockKLine> data =
+                            fetchKLineData(stockCode.exchange(), stockCode.code(), stockCode.name(), startTs);
+                    if (data == null || data.isEmpty()) {
                         break;
                     }
-                    earliestTs -= ONE_DAY_MS;
-                }
-                Long latestTs = getLatestTime(stockCode);
-                if (nowTs - latestTs > ONE_DAY_MS) {
-                    Long nextEndTs = nowTs;
-                    while (nextEndTs > latestTs) {
-                        nextEndTs =
-                                collectSingleData(stockCode.exchange(), stockCode.code(), stockCode.name(), nextEndTs);
-                        if (nextEndTs == null) {
-                            break;
-                        }
-                        nextEndTs -= ONE_DAY_MS;
+
+                    kLineStorage.saveIgnoreDuplicated(data, StockKLine.class);
+
+                    if (data.size() < 2000) {
+                        break;
                     }
+
+                    // Max record_time + 1 day as next batch start
+                    startTs = data.stream()
+                                  .mapToLong(StockKLine::recordTime)
+                                  .max()
+                                  .orElse(startTs) + ONE_DAY_MS;
                 }
             } catch (Exception e) {
                 log.warn("Failed to collect stock k line for: {}", stockCode.name(), e);
             }
+
+            alreadyCollected++;
             if (alreadyCollected % 100 == 0) {
                 log.info("Collect stocks processing: {}/{}", alreadyCollected, totalCnt);
             }
-            alreadyCollected++;
         }
 
         return true;
     }
 
-    private Long getLatestTime(StockCode code) throws Exception {
-        Long latestTs = kLineStorage.queryOne(
-                "SELECT MAX(record_time) FROM stock_k_line WHERE code = '" + code.code() + "'");
-        if (null == latestTs) {
-            latestTs = defaultBeginFromTs;
-        }
-
-        return latestTs;
+    private Long getLatestRecordTime(String code) throws Exception {
+        return kLineStorage.queryOne(
+                "SELECT MAX(record_time) FROM stock_k_line WHERE code = '" + code + "'");
     }
 
-    private Long getEarliestTime(StockCode stockCode) throws Exception {
-        final String sql = "SELECT MIN(record_time) FROM stock_k_line WHERE code = '" + stockCode.code() + "'";
-        return kLineStorage.queryOne(sql);
-    }
-
-    private Long collectSingleData(StockCode.Exchange exchange, String code, String name, Long beginFrom)
-            throws Exception {
+    private List<StockKLine> fetchKLineData(StockCode.Exchange exchange, String code, String name,
+                                            Long beginFrom) throws Exception {
         Request request = new Request();
         request.url(K_LINE_URL);
         Map<String, String> parameters = new HashMap<>(K_LINE_URL_FIX_PARAMS);
@@ -199,14 +184,7 @@ public class StockKLineCollector extends BasicCollector<StockKLine> {
             return null;
         }
 
-        if (kLineData.isEmpty()) {
-            return null;
-        }
-
-        kLineStorage.saveIgnoreDuplicated(kLineData, StockKLine.class);
-        kLineData.sort(Comparator.comparingLong(StockKLine::recordTime));
-
-        return kLineData.get(0).recordTime();
+        return kLineData.isEmpty() ? null : kLineData;
     }
 
     @Getter
